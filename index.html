@@ -18,7 +18,7 @@
         }
     </style>
 </head>
-<body class="bg-slate-100 min-h-screen text-slate-800 flex flex-col">
+<body class="bg-slate-100 min-h-screen text-slate-800 flex flex-col" onload="loadData()">
 
     <!-- Header -->
     <header class="bg-emerald-700 text-white shadow-md py-4 px-6 flex justify-between items-center no-print">
@@ -27,8 +27,11 @@
             <h1 class="text-xl font-bold">Glenview Florist - Invoice System</h1>
         </div>
         <div class="flex items-center space-x-2">
-            <input type="text" id="scriptUrl" placeholder="Google Apps Script Web App URL 입력" class="px-3 py-1.5 text-sm rounded text-slate-800 w-72 focus:outline-none">
-            <button onclick="loadData()" class="bg-emerald-600 hover:bg-emerald-500 px-4 py-1.5 rounded text-sm font-medium transition">데이터 새로고침</button>
+            <!-- 제공해주신 Apps Script URL이 기본값으로 설정되어 있습니다 -->
+            <input type="hidden" id="scriptUrl" value="https://script.google.com/macros/s/AKfycbwwgjjCldAn5nJFsUW9VYebtfP6TRDXHVBUEHeCfQXBeLwcAETTcD610dg7mHPuaYhxHQ/exec">
+            <button onclick="loadData()" class="bg-emerald-600 hover:bg-emerald-500 px-4 py-1.5 rounded text-sm font-medium transition flex items-center gap-2">
+                <i class="fa-solid fa-rotate"></i> 데이터 새로고침
+            </button>
         </div>
     </header>
 
@@ -43,7 +46,7 @@
             <form id="orderForm" onsubmit="handleSubmit(event)" class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
                     <label class="block text-xs font-medium text-slate-500 mb-1">Sheet 이름 (예: 2026-Mary Weeks)</label>
-                    <input type="text" id="sheetName" value="2026-Mary Weeks" required class="w-full border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    <input type="text" id="sheetName" value="2026-Mary Weeks" onchange="loadData()" required class="w-full border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-slate-500 mb-1">주문일 (Order Date)</label>
@@ -171,10 +174,7 @@
         async function loadData() {
             const url = document.getElementById('scriptUrl').value;
             const sheetName = document.getElementById('sheetName').value;
-            if (!url) {
-                alert("상단에 Google Apps Script 웹앱 URL을 입력해주세요.");
-                return;
-            }
+            if (!url) return;
 
             try {
                 const response = await fetch(`${url}?sheetName=${encodeURIComponent(sheetName)}`);
@@ -183,11 +183,10 @@
                 if (result.status === "success") {
                     renderTable(result.data);
                 } else {
-                    alert("데이터를 불러오는 중 오류가 발생했습니다: " + result.message);
+                    console.error("데이터 로드 실패: " + result.message);
                 }
             } catch (error) {
-                console.error(error);
-                alert("서버 통신 오류가 발생했습니다.");
+                console.error("서버 통신 오류:", error);
             }
         }
 
@@ -196,7 +195,14 @@
             tbody.innerHTML = "";
             let totalSum = 0;
 
-            // 첫 번째 행은 헤더이므로 제외하고 순회 (데이터 행부터 시작)
+            if (!rows || rows.length <= 1) {
+                tbody.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-slate-400">등록된 주문 데이터가 없습니다.</td></tr>`;
+                document.getElementById('lblInvoiceTotal').innerText = `$0.00`;
+                document.getElementById('lblBalanceDue').innerText = `$0.00`;
+                return;
+            }
+
+            // 첫 번째 행은 헤더이므로 제외하고 순회
             for (let i = 1; i < rows.length; i++) {
                 const r = rows[i];
                 if (!r[0] && !r[2]) continue; // 빈 행 스킵
@@ -227,10 +233,7 @@
         async function handleSubmit(e) {
             e.preventDefault();
             const url = document.getElementById('scriptUrl').value;
-            if (!url) {
-                alert("상단에 Google Apps Script 웹앱 URL을 입력해주세요.");
-                return;
-            }
+            if (!url) return;
 
             const payload = {
                 sheetName: document.getElementById('sheetName').value,
@@ -267,7 +270,7 @@
             }
         }
 
-        // 페이지 로드시 초기 금액 계산
+        // 초기 금액 계산 실행
         calculateTotal();
     </script>
 </body>
