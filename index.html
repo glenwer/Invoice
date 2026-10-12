@@ -3,51 +3,63 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>인보이스 입력 - Glenview Florist</title>
+<title>Glenview Florist - Invoice System</title>
 <style>
   :root {
-    --bg: #f5f6f8; --card: #fff; --text: #1f2933; --muted: #6b7280; --line: #e3e6ea;
-    --brand: #2f6f4f; --brand-dark: #245a40; --danger: #b42318; --warn-bg: #fff4d6; --warn: #8a5a00;
+    --bg: #faf5fb; --card: #ffffff; --text: #2b2230; --muted: #7a6b82; --line: #eadbee;
+    --brand: #d452d9; --brand-dark: #b83cbd; --tint: #fcebfc; --danger: #c0262d;
+    --warn-bg: #fff4d6; --warn: #8a5a00; --ok-bg: #fbeafb; --ok: #8e2a93;
   }
   @media (prefers-color-scheme: dark) {
-    :root { --bg: #14171a; --card: #1e2227; --text: #e8eaed; --muted: #9aa3ad; --line: #2e343b;
-            --brand: #4caf7d; --brand-dark: #3d9468; --danger: #f97066; --warn-bg: #3a3017; --warn: #f4c95d; }
+    :root { --bg: #19141b; --card: #241d27; --text: #f1e8f4; --muted: #b6a5bd; --line: #3a2f3f;
+            --brand: #e07be4; --brand-dark: #cc5fd1; --tint: #33243a; --danger: #ff8a8f;
+            --warn-bg: #3a3017; --warn: #f4c95d; --ok-bg: #33243a; --ok: #f0b3f3; }
   }
   * { box-sizing: border-box; }
   body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
          background: var(--bg); color: var(--text); font-size: 16px; }
-  header { background: var(--brand); color: #fff; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; }
-  header h1 { margin: 0; font-size: 18px; font-weight: 600; }
-  header button { background: transparent; border: 1px solid rgba(255,255,255,.6); color: #fff; border-radius: 6px; padding: 4px 10px; font-size: 13px; cursor: pointer; }
-  main { max-width: 860px; margin: 0 auto; padding: 14px; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 14px; }
+  .topbar { display: flex; align-items: center; gap: 12px; background: var(--tint); border: 1px solid var(--line);
+            border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; }
+  .topbar img { height: 46px; width: auto; flex: none; }
+  .topbar .title { flex: 1; min-width: 0; font-weight: 700; font-size: 17px; line-height: 1.2; }
+  .topbar .title small { display: block; font-weight: 500; font-size: 12px; color: var(--muted); }
+  .topbar button { background: var(--card); border: 1px solid var(--brand); color: var(--brand-dark); border-radius: 8px;
+                   padding: 8px 12px; font-size: 14px; cursor: pointer; white-space: nowrap; }
+  .topbar button:hover { background: var(--brand); color: #fff; }
+  .topbar .lockbtn { border-color: var(--line); color: var(--muted); }
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px; margin-bottom: 14px; }
   .card h2 { margin: 0 0 10px; font-size: 15px; color: var(--muted); font-weight: 600; }
   label { display: block; font-size: 13px; color: var(--muted); margin: 10px 0 4px; }
   input, select { width: 100%; padding: 10px; border: 1px solid var(--line); border-radius: 8px; font-size: 16px; background: var(--card); color: var(--text); }
   input:focus, select:focus { outline: 2px solid var(--brand); border-color: transparent; }
+  input[readonly] { background: var(--tint); color: var(--text); }
   .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
   .btn { background: var(--brand); color: #fff; border: 0; border-radius: 8px; padding: 12px 16px; font-size: 16px; font-weight: 600; cursor: pointer; width: 100%; margin-top: 14px; }
   .btn:hover { background: var(--brand-dark); }
   .btn:disabled { opacity: .6; cursor: default; }
   .btn.secondary { background: transparent; color: var(--text); border: 1px solid var(--line); margin-top: 8px; }
+  .btn.small { padding: 9px 14px; font-size: 15px; margin-top: 10px; }
   .total-preview { text-align: right; font-weight: 600; margin-top: 10px; }
   .meta { color: var(--muted); font-size: 13px; }
   .msg { padding: 10px 12px; border-radius: 8px; margin-bottom: 12px; font-size: 14px; display: none; }
-  .msg.ok { display: block; background: #e6f4ea; color: #1e6b3a; }
+  .msg.ok { display: block; background: var(--ok-bg); color: var(--ok); }
   .msg.err { display: block; background: #fde8e6; color: var(--danger); }
   .warn { background: var(--warn-bg); color: var(--warn); padding: 10px 12px; border-radius: 8px; font-size: 14px; margin-bottom: 12px; }
+  details summary { cursor: pointer; font-weight: 600; color: var(--brand-dark); font-size: 15px; }
+  details[open] summary { margin-bottom: 4px; }
   table { width: 100%; border-collapse: collapse; font-size: 14px; }
   th, td { padding: 8px 6px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
   th { color: var(--muted); font-weight: 600; font-size: 12px; }
   td.num, th.num { text-align: right; white-space: nowrap; }
   td.act { white-space: nowrap; text-align: right; }
-  td.act button { background: none; border: 0; color: var(--brand); cursor: pointer; font-size: 13px; padding: 4px; }
+  td.act button { background: none; border: 0; color: var(--brand-dark); cursor: pointer; font-size: 13px; padding: 4px; }
   td.act button.del { color: var(--danger); }
   tfoot td { font-weight: 700; border-bottom: 0; }
   .tablewrap { overflow-x: auto; }
   #lock { max-width: 360px; margin: 80px auto; }
   .hidden { display: none !important; }
+  @media (max-width: 480px) { .topbar img { height: 36px; } .topbar .title { font-size: 15px; } }
 </style>
 </head>
 <body>
@@ -59,79 +71,123 @@
   <div id="pinMsg" class="msg err" style="margin-top:10px"></div>
 </div>
 
-<div id="app" class="hidden">
-  <header>
-    <h1>인보이스 입력</h1>
-    <button id="logoutBtn">잠금</button>
-  </header>
-  <main>
-    <div id="msg" class="msg"></div>
+<div id="app" class="wrap hidden">
+  <div class="topbar">
+    <img src="logo.png" alt="Glenview Florist">
+    <div class="title">Glenview Florist - Invoice System<small>월별 인보이스 데이터 입력</small></div>
+    <button id="refreshBtn" type="button">데이터 새로고침</button>
+    <button id="logoutBtn" type="button" class="lockbtn">잠금</button>
+  </div>
 
-    <div class="card">
+  <div id="msg" class="msg"></div>
+
+  <div class="card">
+    <div class="row">
+      <div>
+        <label for="account">어카운트</label>
+        <select id="account"></select>
+      </div>
+      <div>
+        <label for="month">청구월 (배송일 기준)</label>
+        <input id="month" type="month">
+      </div>
+    </div>
+    <div class="meta" id="acctMeta" style="margin-top:8px"></div>
+  </div>
+
+  <div class="card">
+    <h2>Invoice 정보</h2>
+    <div class="row">
+      <div>
+        <label for="invDate">Invoice Date (청구월 말일)</label>
+        <input id="invDate" type="text" readonly>
+      </div>
+      <div>
+        <label for="dueDate">Due Date (Invoice Date + 15일)</label>
+        <input id="dueDate" type="text" readonly>
+      </div>
+    </div>
+    <label for="paidDate">Paid Date</label>
+    <input id="paidDate" type="date">
+    <button class="btn small" id="paidBtn" type="button">Paid Date 저장</button>
+    <button class="btn secondary small" id="outMonthBtn" type="button">출력 시트를 이 달로 맞추기</button>
+  </div>
+
+  <div class="card">
+    <details id="billDetails">
+      <summary>Bill To (수정)</summary>
+      <label for="bt1">Bill To 1 (회사/시설명)</label>
+      <input id="bt1" type="text">
+      <label for="bt2">Bill To 2 (선택)</label>
+      <input id="bt2" type="text">
+      <label for="btAttn">Attn</label>
+      <input id="btAttn" type="text">
+      <label for="btAddr">주소</label>
+      <input id="btAddr" type="text">
       <div class="row">
         <div>
-          <label for="account">어카운트</label>
-          <select id="account"></select>
+          <label for="btPhone">전화 / 부가정보</label>
+          <input id="btPhone" type="text">
         </div>
         <div>
-          <label for="month">청구월 (배송일 기준)</label>
-          <input id="month" type="month">
+          <label for="btEmail">이메일</label>
+          <input id="btEmail" type="text">
         </div>
       </div>
-      <div class="meta" id="acctMeta" style="margin-top:8px"></div>
-    </div>
+      <label for="btCity">City, State Zip</label>
+      <input id="btCity" type="text">
+      <button class="btn small" id="billBtn" type="button">Bill To 저장</button>
+      <div class="meta" style="margin-top:6px">저장하면 계정정보 탭과 이 어카운트의 출력 인보이스에 바로 반영됩니다.</div>
+    </details>
+  </div>
 
-    <div class="card">
-      <h2 id="formTitle">주문 입력</h2>
-      <div class="row">
-        <div>
-          <label for="orderDate">Order Date</label>
-          <input id="orderDate" type="date">
-        </div>
-        <div>
-          <label for="deliveryDate">Delivery Date</label>
-          <input id="deliveryDate" type="date">
-        </div>
+  <div class="card">
+    <h2 id="formTitle">주문 입력</h2>
+    <div class="row">
+      <div>
+        <label for="orderDate">Order Date</label>
+        <input id="orderDate" type="date">
       </div>
-      <label for="nameTown">Name &amp; Town</label>
-      <input id="nameTown" type="text" placeholder="예: Eppie Bacalla, Skokie IL" autocomplete="off">
-      <div class="row">
-        <div>
-          <label for="qty">Qty</label>
-          <input id="qty" type="number" inputmode="numeric" min="1" step="1" value="1">
-        </div>
-        <div>
-          <label for="unitPrice">Unit Price ($)</label>
-          <input id="unitPrice" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00">
-        </div>
+      <div>
+        <label for="deliveryDate">Delivery Date</label>
+        <input id="deliveryDate" type="date">
       </div>
-      <div class="total-preview">Total: <span id="totalPreview">$0.00</span></div>
-      <button class="btn" id="saveBtn">추가</button>
-      <button class="btn secondary hidden" id="cancelEditBtn">수정 취소</button>
     </div>
+    <label for="nameTown">Name &amp; Town</label>
+    <input id="nameTown" type="text" placeholder="예: Eppie Bacalla, Skokie IL" autocomplete="off">
+    <div class="row">
+      <div>
+        <label for="qty">Qty</label>
+        <input id="qty" type="number" inputmode="numeric" min="1" step="1" value="1">
+      </div>
+      <div>
+        <label for="unitPrice">Unit Price ($)</label>
+        <input id="unitPrice" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00">
+      </div>
+    </div>
+    <div class="total-preview">Total: <span id="totalPreview">$0.00</span></div>
+    <button class="btn" id="saveBtn" type="button">추가</button>
+    <button class="btn secondary hidden" id="cancelEditBtn" type="button">수정 취소</button>
+  </div>
 
-    <div class="card">
-      <h2 id="listTitle">입력 내역</h2>
-      <div id="unassignedBox"></div>
-      <div class="tablewrap">
-        <table>
-          <thead>
-            <tr><th>Order</th><th>Delivery</th><th>Name &amp; Town</th><th class="num">Qty</th><th class="num">Unit</th><th class="num">Total</th><th></th></tr>
-          </thead>
-          <tbody id="rows"></tbody>
-          <tfoot><tr><td colspan="5">Invoice Total</td><td class="num" id="grandTotal">$0.00</td><td></td></tr></tfoot>
-        </table>
-      </div>
-      <div class="meta" id="capacityMeta" style="margin-top:8px"></div>
+  <div class="card">
+    <h2 id="listTitle">입력 내역</h2>
+    <div id="unassignedBox"></div>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th>Order</th><th>Delivery</th><th>Name &amp; Town</th><th class="num">Qty</th><th class="num">Unit</th><th class="num">Total</th><th></th></tr>
+        </thead>
+        <tbody id="rows"></tbody>
+        <tfoot><tr><td colspan="5">Invoice Total</td><td class="num" id="grandTotal">$0.00</td><td></td></tr></tfoot>
+      </table>
     </div>
-  </main>
+    <div class="meta" id="capacityMeta" style="margin-top:8px"></div>
+  </div>
 </div>
 
 <script>
-// ====== 설정 ======
-// Apps Script 웹앱 배포 후 받은 URL (…/exec) 을 아래에 붙여넣으세요.
 const API_URL = 'https://script.google.com/macros/s/AKfycbzEQuHS30yoDyBrwAqYvNgqf4Wr6wlZbmiKGsyzaRfjZQBy2zF9kKlC3yv0LiOUPWwE/exec';
-// ==================
 
 const $ = (id) => document.getElementById(id);
 let pin = localStorage.getItem('invoicePin') || '';
@@ -140,8 +196,10 @@ let editingRow = null;
 let dirtyDelivery = false;
 
 const money = (n) => '$' + Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const todayStr = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+const pad = (n) => String(n).padStart(2, '0');
+const todayStr = () => { const d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
 const monthStr = () => todayStr().slice(0, 7);
+const mdy = (d) => pad(d.getMonth() + 1) + '/' + pad(d.getDate()) + '/' + String(d.getFullYear()).slice(2);
 
 function showMsg(text, ok) {
   const el = $('msg');
@@ -186,22 +244,43 @@ $('pinInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('pin
 $('logoutBtn').onclick = () => { localStorage.removeItem('invoicePin'); location.reload(); };
 
 // ---------- App ----------
-function initApp() {
+function fillAccountSelect(keep) {
   const sel = $('account');
-  const last = localStorage.getItem('invoiceAccount');
   sel.innerHTML = '';
   accounts.forEach((a) => {
     const o = document.createElement('option');
     o.value = a.key; o.textContent = a.name;
     sel.appendChild(o);
   });
-  if (last && accounts.some((a) => a.key === last)) sel.value = last;
+  if (keep && accounts.some((a) => a.key === keep)) sel.value = keep;
+}
+
+function initApp() {
+  fillAccountSelect(localStorage.getItem('invoiceAccount'));
   $('month').value = monthStr();
   resetForm();
+  fillBillTo();
   refresh();
 }
 
 function currentAccount() { return accounts.find((a) => a.key === $('account').value); }
+
+function fillBillTo() {
+  const a = currentAccount();
+  if (!a) return;
+  $('bt1').value = a.bill1; $('bt2').value = a.bill2; $('btAttn').value = a.attn;
+  $('btAddr').value = a.addr; $('btPhone').value = a.phone; $('btCity').value = a.city; $('btEmail').value = a.email;
+}
+
+function updateInvoiceDates() {
+  const m = $('month').value;
+  if (!/^\d{4}-\d{2}$/.test(m)) { $('invDate').value = ''; $('dueDate').value = ''; return; }
+  const y = Number(m.slice(0, 4)), mo = Number(m.slice(5, 7));
+  const inv = new Date(y, mo, 0);                       // last day of month
+  const due = new Date(inv.getFullYear(), inv.getMonth(), inv.getDate() + 15);
+  $('invDate').value = mdy(inv);
+  $('dueDate').value = mdy(due);
+}
 
 function resetForm() {
   editingRow = null; dirtyDelivery = false;
@@ -224,9 +303,27 @@ function updatePreview() {
 ['qty', 'unitPrice'].forEach((id) => $(id).addEventListener('input', updatePreview));
 $('orderDate').addEventListener('change', () => { if (!dirtyDelivery) $('deliveryDate').value = $('orderDate').value; });
 $('deliveryDate').addEventListener('change', () => { dirtyDelivery = true; });
-$('account').addEventListener('change', () => { localStorage.setItem('invoiceAccount', $('account').value); resetForm(); refresh(); });
+$('account').addEventListener('change', () => {
+  localStorage.setItem('invoiceAccount', $('account').value);
+  resetForm(); fillBillTo(); refresh();
+});
 $('month').addEventListener('change', refresh);
 $('cancelEditBtn').onclick = resetForm;
+
+$('refreshBtn').onclick = async () => {
+  const btn = $('refreshBtn');
+  btn.disabled = true;
+  try {
+    const keep = $('account').value;
+    const data = await api({ action: 'accounts' });
+    accounts = data.accounts;
+    fillAccountSelect(keep);
+    fillBillTo();
+    await refresh();
+    showMsg('데이터를 새로고침했습니다.', true);
+  } catch (e) { showMsg(e.message, false); }
+  btn.disabled = false;
+};
 
 function esc(s) { const d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
 
@@ -235,8 +332,10 @@ async function refresh() {
   if (!acct) return;
   $('acctMeta').textContent = (acct.attn ? 'Attn: ' + acct.attn + '  ·  ' : '') + '다음 인보이스 번호: ' + acct.nextInvoice;
   $('listTitle').textContent = '입력 내역 - ' + ($('month').value || '전체');
+  updateInvoiceDates();
   try {
     const data = await api({ action: 'list', account: acct.key, month: $('month').value });
+    $('paidDate').value = data.paidDate || '';
     renderRows(data);
   } catch (e) { showMsg(e.message, false); }
 }
@@ -281,7 +380,7 @@ function startEdit(r) {
   $('qty').value = r.qty;
   $('unitPrice').value = r.unitPrice;
   updatePreview();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  $('formTitle').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 async function removeRow(r) {
@@ -312,8 +411,7 @@ $('saveBtn').onclick = async () => {
     const wasEdit = !!editingRow;
     const keepOrder = $('orderDate').value, keepDelivery = $('deliveryDate').value;
     showMsg(wasEdit ? '수정했습니다.' : '추가했습니다.', true);
-    // 배송일 기준 청구월로 목록 이동
-    if (keepDelivery) $('month').value = keepDelivery.slice(0, 7);
+    if (keepDelivery) $('month').value = keepDelivery.slice(0, 7);   // 배송일 기준 청구월로 이동
     resetForm();
     if (!wasEdit) { $('orderDate').value = keepOrder; $('deliveryDate').value = keepDelivery; dirtyDelivery = true; }
     refresh();
@@ -322,10 +420,48 @@ $('saveBtn').onclick = async () => {
   btn.disabled = false;
 };
 
+// ---------- Paid Date / output month / Bill To ----------
+$('paidBtn').onclick = async () => {
+  const btn = $('paidBtn');
+  btn.disabled = true;
+  try {
+    await api({ action: 'savePaid', account: currentAccount().key, month: $('month').value, paidDate: $('paidDate').value });
+    showMsg($('paidDate').value ? 'Paid Date를 저장했습니다.' : 'Paid Date를 비웠습니다.', true);
+  } catch (e) { showMsg(e.message, false); }
+  btn.disabled = false;
+};
+
+$('outMonthBtn').onclick = async () => {
+  const btn = $('outMonthBtn');
+  btn.disabled = true;
+  try {
+    await api({ action: 'setOutputMonth', account: currentAccount().key, month: $('month').value });
+    showMsg('출력 시트의 청구월을 ' + $('month').value + '로 맞췄습니다.', true);
+  } catch (e) { showMsg(e.message, false); }
+  btn.disabled = false;
+};
+
+$('billBtn').onclick = async () => {
+  const btn = $('billBtn');
+  const a = currentAccount();
+  const f = {
+    bill1: $('bt1').value, bill2: $('bt2').value, attn: $('btAttn').value, addr: $('btAddr').value,
+    phone: $('btPhone').value, city: $('btCity').value, email: $('btEmail').value
+  };
+  btn.disabled = true;
+  try {
+    await api(Object.assign({ action: 'saveBillTo', account: a.key }, f));
+    Object.keys(f).forEach((k) => { a[k] = f[k].trim(); });
+    a.name = a.bill1 + (a.bill2 ? ' / ' + a.bill2 : '');
+    fillAccountSelect(a.key);
+    $('acctMeta').textContent = (a.attn ? 'Attn: ' + a.attn + '  ·  ' : '') + '다음 인보이스 번호: ' + a.nextInvoice;
+    showMsg('Bill To를 저장했습니다.', true);
+  } catch (e) { showMsg(e.message, false); }
+  btn.disabled = false;
+};
+
 // ---------- boot ----------
-if (API_URL.indexOf('PASTE_') === 0) {
-  document.body.innerHTML = '<p style="padding:20px">index.html 상단의 API_URL에 Apps Script 웹앱 URL을 붙여넣어 주세요.</p>';
-} else if (pin) {
+if (pin) {
   unlock(pin);
 } else {
   $('lock').classList.remove('hidden');
