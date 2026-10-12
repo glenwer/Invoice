@@ -1,277 +1,335 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Glenview Florist - Invoice & Order Management</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome CDN -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
-        body { font-family: 'Noto Sans KR', sans-serif; }
-        @media print {
-            .no-print { display: none !important; }
-            body { background: white; }
-            .print-area { box-shadow: none !important; border: none !important; }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>인보이스 입력 - Glenview Florist</title>
+<style>
+  :root {
+    --bg: #f5f6f8; --card: #fff; --text: #1f2933; --muted: #6b7280; --line: #e3e6ea;
+    --brand: #2f6f4f; --brand-dark: #245a40; --danger: #b42318; --warn-bg: #fff4d6; --warn: #8a5a00;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #14171a; --card: #1e2227; --text: #e8eaed; --muted: #9aa3ad; --line: #2e343b;
+            --brand: #4caf7d; --brand-dark: #3d9468; --danger: #f97066; --warn-bg: #3a3017; --warn: #f4c95d; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+         background: var(--bg); color: var(--text); font-size: 16px; }
+  header { background: var(--brand); color: #fff; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; }
+  header h1 { margin: 0; font-size: 18px; font-weight: 600; }
+  header button { background: transparent; border: 1px solid rgba(255,255,255,.6); color: #fff; border-radius: 6px; padding: 4px 10px; font-size: 13px; cursor: pointer; }
+  main { max-width: 860px; margin: 0 auto; padding: 14px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px; margin-bottom: 14px; }
+  .card h2 { margin: 0 0 10px; font-size: 15px; color: var(--muted); font-weight: 600; }
+  label { display: block; font-size: 13px; color: var(--muted); margin: 10px 0 4px; }
+  input, select { width: 100%; padding: 10px; border: 1px solid var(--line); border-radius: 8px; font-size: 16px; background: var(--card); color: var(--text); }
+  input:focus, select:focus { outline: 2px solid var(--brand); border-color: transparent; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+  .btn { background: var(--brand); color: #fff; border: 0; border-radius: 8px; padding: 12px 16px; font-size: 16px; font-weight: 600; cursor: pointer; width: 100%; margin-top: 14px; }
+  .btn:hover { background: var(--brand-dark); }
+  .btn:disabled { opacity: .6; cursor: default; }
+  .btn.secondary { background: transparent; color: var(--text); border: 1px solid var(--line); margin-top: 8px; }
+  .total-preview { text-align: right; font-weight: 600; margin-top: 10px; }
+  .meta { color: var(--muted); font-size: 13px; }
+  .msg { padding: 10px 12px; border-radius: 8px; margin-bottom: 12px; font-size: 14px; display: none; }
+  .msg.ok { display: block; background: #e6f4ea; color: #1e6b3a; }
+  .msg.err { display: block; background: #fde8e6; color: var(--danger); }
+  .warn { background: var(--warn-bg); color: var(--warn); padding: 10px 12px; border-radius: 8px; font-size: 14px; margin-bottom: 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { padding: 8px 6px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: 12px; }
+  td.num, th.num { text-align: right; white-space: nowrap; }
+  td.act { white-space: nowrap; text-align: right; }
+  td.act button { background: none; border: 0; color: var(--brand); cursor: pointer; font-size: 13px; padding: 4px; }
+  td.act button.del { color: var(--danger); }
+  tfoot td { font-weight: 700; border-bottom: 0; }
+  .tablewrap { overflow-x: auto; }
+  #lock { max-width: 360px; margin: 80px auto; }
+  .hidden { display: none !important; }
+</style>
 </head>
-<body class="bg-slate-100 min-h-screen text-slate-800 flex flex-col" onload="loadData()">
+<body>
 
-    <!-- Header -->
-    <header class="bg-emerald-700 text-white shadow-md py-4 px-6 flex justify-between items-center no-print">
-        <div class="flex items-center space-x-3">
-            <i class="fa-solid fa-seedling text-2xl"></i>
-            <h1 class="text-xl font-bold">Glenview Florist - Invoice System</h1>
+<div id="lock" class="card hidden">
+  <h2>PIN 입력</h2>
+  <input id="pinInput" type="password" inputmode="numeric" placeholder="PIN" autocomplete="current-password">
+  <button class="btn" id="pinBtn">확인</button>
+  <div id="pinMsg" class="msg err" style="margin-top:10px"></div>
+</div>
+
+<div id="app" class="hidden">
+  <header>
+    <h1>인보이스 입력</h1>
+    <button id="logoutBtn">잠금</button>
+  </header>
+  <main>
+    <div id="msg" class="msg"></div>
+
+    <div class="card">
+      <div class="row">
+        <div>
+          <label for="account">어카운트</label>
+          <select id="account"></select>
         </div>
-        <div class="flex items-center space-x-2">
-            <!-- 제공해주신 Apps Script URL이 기본값으로 설정되어 있습니다 -->
-            <input type="hidden" id="scriptUrl" value="https://script.google.com/macros/s/AKfycbwwgjjCldAn5nJFsUW9VYebtfP6TRDXHVBUEHeCfQXBeLwcAETTcD610dg7mHPuaYhxHQ/exec">
-            <button onclick="loadData()" class="bg-emerald-600 hover:bg-emerald-500 px-4 py-1.5 rounded text-sm font-medium transition flex items-center gap-2">
-                <i class="fa-solid fa-rotate"></i> 데이터 새로고침
-            </button>
+        <div>
+          <label for="month">청구월 (배송일 기준)</label>
+          <input id="month" type="month">
         </div>
-    </header>
+      </div>
+      <div class="meta" id="acctMeta" style="margin-top:8px"></div>
+    </div>
 
-    <!-- Main Container -->
-    <main class="flex-grow container mx-auto px-4 py-8 max-w-5xl">
-        
-        <!-- 입력 폼 섹션 (월중 데이터 입력) -->
-        <section class="bg-white rounded-xl shadow-sm p-6 mb-8 no-print border border-slate-200">
-            <h2 class="text-lg font-bold text-slate-700 mb-4 flex items-center gap-2">
-                <i class="fa-solid fa-pen-to-square text-emerald-600"></i> 새 주문 / 인보이스 항목 추가
-            </h2>
-            <form id="orderForm" onsubmit="handleSubmit(event)" class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div>
-                    <label class="block text-xs font-medium text-slate-500 mb-1">Sheet 이름 (예: 2026-Mary Weeks)</label>
-                    <input type="text" id="sheetName" value="2026-Mary Weeks" onchange="loadData()" required class="w-full border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-slate-500 mb-1">주문일 (Order Date)</label>
-                    <input type="date" id="orderDate" required class="w-full border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-slate-500 mb-1">배송일 (Delivery Date)</label>
-                    <input type="date" id="deliveryDate" required class="w-full border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-slate-500 mb-1">수령인 및 타운 (Name & Town)</label>
-                    <input type="text" id="nameAndTown" placeholder="예: Eppie Bacalla, Skokie IL" required class="w-full border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-slate-500 mb-1">수량 (Qty)</label>
-                    <input type="number" id="qty" value="1" min="1" oninput="calculateTotal()" class="w-full border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-slate-500 mb-1">단가 (Unit Price)</label>
-                    <input type="number" step="0.01" id="unitPrice" value="125.75" oninput="calculateTotal()" required class="w-full border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-slate-500 mb-1">총금액 (Total Price)</label>
-                    <input type="number" step="0.01" id="totalPrice" readonly class="w-full border rounded px-3 py-2 text-sm bg-slate-50 text-slate-600 font-semibold">
-                </div>
-                <div class="flex items-end">
-                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-4 rounded text-sm transition flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-plus"></i> 항목 추가
-                    </button>
-                </div>
-            </form>
-        </section>
+    <div class="card">
+      <h2 id="formTitle">주문 입력</h2>
+      <div class="row">
+        <div>
+          <label for="orderDate">Order Date</label>
+          <input id="orderDate" type="date">
+        </div>
+        <div>
+          <label for="deliveryDate">Delivery Date</label>
+          <input id="deliveryDate" type="date">
+        </div>
+      </div>
+      <label for="nameTown">Name &amp; Town</label>
+      <input id="nameTown" type="text" placeholder="예: Eppie Bacalla, Skokie IL" autocomplete="off">
+      <div class="row">
+        <div>
+          <label for="qty">Qty</label>
+          <input id="qty" type="number" inputmode="numeric" min="1" step="1" value="1">
+        </div>
+        <div>
+          <label for="unitPrice">Unit Price ($)</label>
+          <input id="unitPrice" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00">
+        </div>
+      </div>
+      <div class="total-preview">Total: <span id="totalPreview">$0.00</span></div>
+      <button class="btn" id="saveBtn">추가</button>
+      <button class="btn secondary hidden" id="cancelEditBtn">수정 취소</button>
+    </div>
 
-        <!-- 출력 폼 미리보기 섹션 (Invoice 출력 양식) -->
-        <section class="bg-white rounded-xl shadow-md p-8 print-area border border-slate-200">
-            <!-- 인보이스 헤더 -->
-            <div class="flex justify-between border-b pb-6 mb-6">
-                <div>
-                    <h2 class="text-2xl font-black text-emerald-800">Glenview Florist</h2>
-                    <p class="text-xs text-slate-500 mt-1">1813 Waukegan Road</p>
-                    <p class="text-xs text-slate-500">Glenview, IL 60025</p>
-                    <p class="text-xs text-slate-500">Tel: (847)998-0717 | glenviewflorist1@gmail.com</p>
-                </div>
-                <div class="text-right">
-                    <h3 class="text-xl font-bold text-slate-700">INVOICE</h3>
-                    <p class="text-sm text-slate-600 mt-1 font-semibold">Invoice Date: <span id="lblInvoiceDate">01/31/2026</span></p>
-                    <p class="text-sm text-slate-600">Due Date: <span id="lblDueDate">02/15/2026</span></p>
-                </div>
-            </div>
+    <div class="card">
+      <h2 id="listTitle">입력 내역</h2>
+      <div id="unassignedBox"></div>
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr><th>Order</th><th>Delivery</th><th>Name &amp; Town</th><th class="num">Qty</th><th class="num">Unit</th><th class="num">Total</th><th></th></tr>
+          </thead>
+          <tbody id="rows"></tbody>
+          <tfoot><tr><td colspan="5">Invoice Total</td><td class="num" id="grandTotal">$0.00</td><td></td></tr></tfoot>
+        </table>
+      </div>
+      <div class="meta" id="capacityMeta" style="margin-top:8px"></div>
+    </div>
+  </main>
+</div>
 
-            <!-- 빌링 정보 -->
-            <div class="bg-slate-50 p-4 rounded-lg mb-6 flex justify-between text-sm">
-                <div>
-                    <p class="font-bold text-slate-700">Bill To:</p>
-                    <p class="text-slate-600">Legacy Health Care (Mary Weeks)</p>
-                    <p class="text-slate-600">Attn: Ms. Jamie Dlatt</p>
-                    <p class="text-slate-600">3450 Oakton St., Skokie, IL 60076</p>
-                </div>
-                <div class="text-right">
-                    <p class="text-slate-600"><span class="font-bold">Phone:</span> (224)240-8887</p>
-                    <p class="text-slate-600"><span class="font-bold">Email:</span> mweeks@legacyhc.com</p>
-                </div>
-            </div>
+<script>
+// ====== 설정 ======
+// Apps Script 웹앱 배포 후 받은 URL (…/exec) 을 아래에 붙여넣으세요.
+const API_URL = 'https://script.google.com/macros/s/AKfycbzEQuHS30yoDyBrwAqYvNgqf4Wr6wlZbmiKGsyzaRfjZQBy2zF9kKlC3yv0LiOUPWwE/exec';
+// ==================
 
-            <!-- 주문 내역 테이블 -->
-            <div class="overflow-x-auto mb-6">
-                <table class="w-full text-left border-collapse text-xs">
-                    <thead>
-                        <tr class="bg-slate-100 border-b text-slate-700">
-                            <th class="p-2 border">Order Date</th>
-                            <th class="p-2 border">Delivery Date</th>
-                            <th class="p-2 border">Name & Town</th>
-                            <th class="p-2 border text-center">Qty</th>
-                            <th class="p-2 border text-right">Unit Price</th>
-                            <th class="p-2 border text-right">Total Price</th>
-                            <th class="p-2 border">Check #</th>
-                            <th class="p-2 border text-right">Amount</th>
-                        </tr>
-                    </thead>
-                    <tbody id="invoiceTableBody">
-                        <!-- 데이터가 동적으로 채워집니다 -->
-                    </tbody>
-                </table>
-            </div>
+const $ = (id) => document.getElementById(id);
+let pin = localStorage.getItem('invoicePin') || '';
+let accounts = [];
+let editingRow = null;
+let dirtyDelivery = false;
 
-            <!-- 하단 합계 영역 -->
-            <div class="flex justify-between items-start border-t pt-4">
-                <div class="text-xs text-slate-500">
-                    <p class="font-medium text-slate-700">Thank you for business with us.</p>
-                    <p class="mt-1">Please make checks payable to Glenview Florist.</p>
-                </div>
-                <div class="w-64 space-y-2 text-sm">
-                    <div class="flex justify-between font-semibold">
-                        <span>Invoice Total:</span>
-                        <span id="lblInvoiceTotal">$0.00</span>
-                    </div>
-                    <div class="flex justify-between text-slate-500 border-t pt-1">
-                        <span>Partial Payment:</span>
-                        <span>$0.00</span>
-                    </div>
-                    <div class="flex justify-between font-bold text-base text-emerald-800 border-t pt-2">
-                        <span>Balance Due:</span>
-                        <span id="lblBalanceDue">$0.00</span>
-                    </div>
-                </div>
-            </div>
+const money = (n) => '$' + Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const todayStr = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+const monthStr = () => todayStr().slice(0, 7);
 
-            <!-- 인쇄 버튼 -->
-            <div class="mt-8 text-center no-print">
-                <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-900 text-white px-6 py-2 rounded-lg text-sm font-medium transition shadow">
-                    <i class="fa-solid fa-print mr-2"></i> 인보이스 인쇄 / PDF 저장
-                </button>
-            </div>
-        </section>
-    </main>
+function showMsg(text, ok) {
+  const el = $('msg');
+  el.textContent = text;
+  el.className = 'msg ' + (ok ? 'ok' : 'err');
+  if (ok) setTimeout(() => { if (el.textContent === text) el.className = 'msg'; }, 3500);
+}
 
-    <!-- JavaScript 로직 -->
-    <script>
-        function calculateTotal() {
-            const qty = parseFloat(document.getElementById('qty').value) || 0;
-            const unitPrice = parseFloat(document.getElementById('unitPrice').value) || 0;
-            document.getElementById('totalPrice').value = (qty * unitPrice).toFixed(2);
-        }
+async function api(payload) {
+  const res = await fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },   // avoids CORS preflight
+    body: JSON.stringify(Object.assign({ pin: pin }, payload))
+  });
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.error || '요청 실패');
+  return data;
+}
 
-        async function loadData() {
-            const url = document.getElementById('scriptUrl').value;
-            const sheetName = document.getElementById('sheetName').value;
-            if (!url) return;
+// ---------- PIN ----------
+async function unlock(candidate) {
+  pin = candidate;
+  try {
+    const data = await api({ action: 'accounts' });
+    accounts = data.accounts;
+    localStorage.setItem('invoicePin', pin);
+    $('lock').classList.add('hidden');
+    $('app').classList.remove('hidden');
+    initApp();
+  } catch (e) {
+    pin = '';
+    localStorage.removeItem('invoicePin');
+    $('lock').classList.remove('hidden');
+    $('app').classList.add('hidden');
+    $('pinMsg').textContent = e.message;
+    $('pinMsg').style.display = 'block';
+  }
+}
 
-            try {
-                const response = await fetch(`${url}?sheetName=${encodeURIComponent(sheetName)}`);
-                const result = await response.json();
-                
-                if (result.status === "success") {
-                    renderTable(result.data);
-                } else {
-                    console.error("데이터 로드 실패: " + result.message);
-                }
-            } catch (error) {
-                console.error("서버 통신 오류:", error);
-            }
-        }
+$('pinBtn').onclick = () => unlock($('pinInput').value.trim());
+$('pinInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('pinBtn').click(); });
+$('logoutBtn').onclick = () => { localStorage.removeItem('invoicePin'); location.reload(); };
 
-        function renderTable(rows) {
-            const tbody = document.getElementById('invoiceTableBody');
-            tbody.innerHTML = "";
-            let totalSum = 0;
+// ---------- App ----------
+function initApp() {
+  const sel = $('account');
+  const last = localStorage.getItem('invoiceAccount');
+  sel.innerHTML = '';
+  accounts.forEach((a) => {
+    const o = document.createElement('option');
+    o.value = a.key; o.textContent = a.name;
+    sel.appendChild(o);
+  });
+  if (last && accounts.some((a) => a.key === last)) sel.value = last;
+  $('month').value = monthStr();
+  resetForm();
+  refresh();
+}
 
-            if (!rows || rows.length <= 1) {
-                tbody.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-slate-400">등록된 주문 데이터가 없습니다.</td></tr>`;
-                document.getElementById('lblInvoiceTotal').innerText = `$0.00`;
-                document.getElementById('lblBalanceDue').innerText = `$0.00`;
-                return;
-            }
+function currentAccount() { return accounts.find((a) => a.key === $('account').value); }
 
-            // 첫 번째 행은 헤더이므로 제외하고 순회
-            for (let i = 1; i < rows.length; i++) {
-                const r = rows[i];
-                if (!r[0] && !r[2]) continue; // 빈 행 스킵
+function resetForm() {
+  editingRow = null; dirtyDelivery = false;
+  $('formTitle').textContent = '주문 입력';
+  $('saveBtn').textContent = '추가';
+  $('cancelEditBtn').classList.add('hidden');
+  $('orderDate').value = todayStr();
+  $('deliveryDate').value = todayStr();
+  $('nameTown').value = '';
+  $('qty').value = 1;
+  $('unitPrice').value = '';
+  updatePreview();
+}
 
-                const totalPrice = parseFloat(r[5]) || 0;
-                totalSum += totalPrice;
+function updatePreview() {
+  const t = Number($('qty').value || 0) * Number($('unitPrice').value || 0);
+  $('totalPreview').textContent = money(t);
+}
 
-                const tr = document.createElement('tr');
-                tr.className = "border-b hover:bg-slate-50";
-                tr.innerHTML = `
-                    <td class="p-2 border">${r[0] || ''}</td>
-                    <td class="p-2 border">${r[1] || ''}</td>
-                    <td class="p-2 border">${r[2] || ''}</td>
-                    <td class="p-2 border text-center">${r[3] || 1}</td>
-                    <td class="p-2 border text-right">$${(parseFloat(r[4]) || 0).toFixed(2)}</td>
-                    <td class="p-2 border text-right font-medium">$${totalPrice.toFixed(2)}</td>
-                    <td class="p-2 border">${r[6] || ''}</td>
-                    <td class="p-2 border text-right">$${(parseFloat(r[7]) || 0).toFixed(2)}</td>
-                `;
-                tbody.appendChild(tr);
-            }
+['qty', 'unitPrice'].forEach((id) => $(id).addEventListener('input', updatePreview));
+$('orderDate').addEventListener('change', () => { if (!dirtyDelivery) $('deliveryDate').value = $('orderDate').value; });
+$('deliveryDate').addEventListener('change', () => { dirtyDelivery = true; });
+$('account').addEventListener('change', () => { localStorage.setItem('invoiceAccount', $('account').value); resetForm(); refresh(); });
+$('month').addEventListener('change', refresh);
+$('cancelEditBtn').onclick = resetForm;
 
-            // 합계 반영
-            document.getElementById('lblInvoiceTotal').innerText = `$${totalSum.toFixed(2)}`;
-            document.getElementById('lblBalanceDue').innerText = `$${totalSum.toFixed(2)}`;
-        }
+function esc(s) { const d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
 
-        async function handleSubmit(e) {
-            e.preventDefault();
-            const url = document.getElementById('scriptUrl').value;
-            if (!url) return;
+async function refresh() {
+  const acct = currentAccount();
+  if (!acct) return;
+  $('acctMeta').textContent = (acct.attn ? 'Attn: ' + acct.attn + '  ·  ' : '') + '다음 인보이스 번호: ' + acct.nextInvoice;
+  $('listTitle').textContent = '입력 내역 - ' + ($('month').value || '전체');
+  try {
+    const data = await api({ action: 'list', account: acct.key, month: $('month').value });
+    renderRows(data);
+  } catch (e) { showMsg(e.message, false); }
+}
 
-            const payload = {
-                sheetName: document.getElementById('sheetName').value,
-                orderDate: document.getElementById('orderDate').value,
-                deliveryDate: document.getElementById('deliveryDate').value,
-                nameAndTown: document.getElementById('nameAndTown').value,
-                qty: document.getElementById('qty').value,
-                unitPrice: document.getElementById('unitPrice').value,
-                totalPrice: document.getElementById('totalPrice').value,
-                checkNum: "",
-                amount: 0
-            };
+function renderRows(data) {
+  const rows = data.rows.slice().sort((a, b) => (a.deliveryDate + a.row).localeCompare(b.deliveryDate + b.row));
+  let total = 0;
+  $('rows').innerHTML = rows.map((r) => {
+    total += Number(r.total || 0);
+    return '<tr>' +
+      '<td>' + esc(r.orderDate.slice(5)) + '</td>' +
+      '<td>' + esc(r.deliveryDate.slice(5)) + '</td>' +
+      '<td>' + esc(r.nameTown) + '</td>' +
+      '<td class="num">' + esc(r.qty) + '</td>' +
+      '<td class="num">' + money(r.unitPrice) + '</td>' +
+      '<td class="num">' + money(r.total) + '</td>' +
+      '<td class="act"><button data-edit="' + r.row + '">수정</button><button class="del" data-del="' + r.row + '">삭제</button></td>' +
+      '</tr>';
+  }).join('') || '<tr><td colspan="7" class="meta">이 달에 입력된 주문이 없습니다.</td></tr>';
+  $('grandTotal').textContent = money(total);
+  $('capacityMeta').textContent = '시트 사용량: ' + data.used + ' / ' + data.capacity + '행 (전체 월 합계)';
 
-            try {
-                const response = await fetch(url, {
-                    method: "POST",
-                    body: JSON.stringify(payload)
-                });
-                const result = await response.json();
-                
-                if (result.status === "success") {
-                    alert("성공적으로 추가되었습니다!");
-                    document.getElementById('orderForm').reset();
-                    document.getElementById('qty').value = "1";
-                    document.getElementById('unitPrice').value = "125.75";
-                    calculateTotal();
-                    loadData(); // 목록 새로고침
-                } else {
-                    alert("추가 실패: " + result.message);
-                }
-            } catch (error) {
-                console.error(error);
-                alert("전송 중 오류가 발생했습니다.");
-            }
-        }
+  $('unassignedBox').innerHTML = data.unassigned.length
+    ? '<div class="warn">배송일이 없는 행이 ' + data.unassigned.length + '건 있습니다. 배송일이 있어야 청구월에 포함됩니다: ' +
+      data.unassigned.map((r) => esc(r.nameTown || '(이름 없음)') + ' [행 ' + r.row + ']').join(', ') + '</div>'
+    : '';
 
-        // 초기 금액 계산 실행
-        calculateTotal();
-    </script>
+  const byRow = {};
+  rows.forEach((r) => { byRow[r.row] = r; });
+  document.querySelectorAll('[data-edit]').forEach((b) => b.onclick = () => startEdit(byRow[b.dataset.edit]));
+  document.querySelectorAll('[data-del]').forEach((b) => b.onclick = () => removeRow(byRow[b.dataset.del]));
+}
+
+function startEdit(r) {
+  editingRow = r.row; dirtyDelivery = true;
+  $('formTitle').textContent = '수정 중 (행 ' + r.row + ')';
+  $('saveBtn').textContent = '수정 저장';
+  $('cancelEditBtn').classList.remove('hidden');
+  $('orderDate').value = r.orderDate;
+  $('deliveryDate').value = r.deliveryDate;
+  $('nameTown').value = r.nameTown;
+  $('qty').value = r.qty;
+  $('unitPrice').value = r.unitPrice;
+  updatePreview();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function removeRow(r) {
+  if (!confirm('삭제할까요?\n' + r.deliveryDate + '  ' + r.nameTown + '  ' + money(r.total))) return;
+  try {
+    await api({ action: 'delete', account: currentAccount().key, row: r.row });
+    showMsg('삭제했습니다.', true);
+    if (editingRow === r.row) resetForm();
+    refresh();
+  } catch (e) { showMsg(e.message, false); }
+}
+
+$('saveBtn').onclick = async () => {
+  const btn = $('saveBtn');
+  const payload = {
+    action: editingRow ? 'update' : 'add',
+    account: currentAccount().key,
+    row: editingRow,
+    orderDate: $('orderDate').value,
+    deliveryDate: $('deliveryDate').value,
+    nameTown: $('nameTown').value,
+    qty: $('qty').value,
+    unitPrice: $('unitPrice').value
+  };
+  btn.disabled = true;
+  try {
+    await api(payload);
+    const wasEdit = !!editingRow;
+    const keepOrder = $('orderDate').value, keepDelivery = $('deliveryDate').value;
+    showMsg(wasEdit ? '수정했습니다.' : '추가했습니다.', true);
+    // 배송일 기준 청구월로 목록 이동
+    if (keepDelivery) $('month').value = keepDelivery.slice(0, 7);
+    resetForm();
+    if (!wasEdit) { $('orderDate').value = keepOrder; $('deliveryDate').value = keepDelivery; dirtyDelivery = true; }
+    refresh();
+    if (!wasEdit) $('nameTown').focus();
+  } catch (e) { showMsg(e.message, false); }
+  btn.disabled = false;
+};
+
+// ---------- boot ----------
+if (API_URL.indexOf('PASTE_') === 0) {
+  document.body.innerHTML = '<p style="padding:20px">index.html 상단의 API_URL에 Apps Script 웹앱 URL을 붙여넣어 주세요.</p>';
+} else if (pin) {
+  unlock(pin);
+} else {
+  $('lock').classList.remove('hidden');
+}
+</script>
 </body>
 </html>
