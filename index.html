@@ -248,7 +248,8 @@ const money = (n) => '$' + Number(n || 0).toLocaleString('en-US', { minimumFract
 const pad = (n) => String(n).padStart(2, '0');
 const todayStr = () => { const d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
 const monthStr = () => todayStr().slice(0, 7);
-const mdy = (d) => pad(d.getMonth() + 1) + '/' + pad(d.getDate()) + '/' + String(d.getFullYear()).slice(2);
+const mdy = (d) => pad(d.getMonth() + 1) + '/' + pad(d.getDate()) + '/' + d.getFullYear();
+const isoToMdyFull = (s) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || ''); return m ? m[2] + '/' + m[3] + '/' + m[1] : ''; };
 const isoToMdy = (s) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || ''); return m ? m[2] + '/' + m[3] + '/' + m[1].slice(2) : ''; };
 function esc(s) { const d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
 
@@ -531,7 +532,7 @@ function openOutput() {
       '<div class="inv"><h1>Invoice</h1><div class="invno"># ' + esc(a.nextInvoice) + '</div>' +
         '<table class="dates"><tr><td class="k">Invoice Date :</td><td class="v">' + esc(d.inv) + '</td></tr>' +
         '<tr><td class="k">Due Date :</td><td class="v">' + esc(d.due) + '</td></tr>' +
-        '<tr><td class="k">Paid Date :</td><td class="v">' + esc(isoToMdy(paid)) + '</td></tr></table></div>' +
+        '<tr><td class="k">Paid Date :</td><td class="v">' + esc(isoToMdyFull(paid)) + '</td></tr></table></div>' +
     '</div>' +
     '<div style="margin-top:12px;color:#555;font-style:italic">Partial Payment</div>' +
     '<table><thead><tr><th style="width:30px">No</th><th>Order Date</th><th>Delivery Date</th><th>Name &amp; Town</th><th>Qty</th><th>Unit price</th><th>Total price</th><th>Check #</th><th>Amount</th></tr></thead>' +
