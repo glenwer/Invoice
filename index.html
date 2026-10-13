@@ -32,10 +32,11 @@
   .btn.ghost:hover { background: var(--tint); }
   .btn.block { width: 100%; margin-top: 10px; padding: 11px; font-size: 15px; }
   .btn.sm { padding: 6px 10px; font-size: 13px; }
-  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: start; }
-  @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
-  .invgrid { display: grid; grid-template-columns: 1fr 260px; gap: 16px; align-items: start; }
-  @media (max-width: 760px) { .invgrid { grid-template-columns: 1fr; } }
+  .grid { display: grid; grid-template-columns: 380px 1fr; gap: 10px; align-items: start; }
+  @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
+  .invgrid { display: grid; grid-template-columns: 1fr 230px; gap: 16px; align-items: start; }
+  @media (max-width: 560px) { .invgrid { grid-template-columns: 1fr; } }
+  #invNo { font-size: 28px; font-weight: 800; padding: 6px 9px; }
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; }
   .card h2 { margin: 0 0 6px; font-size: 13px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
   label { display: block; font-size: 12px; color: var(--muted); margin: 6px 0 2px; }
@@ -115,83 +116,86 @@
   <div id="msg" class="msg"></div>
 
   <div class="grid">
+    <div>
+      <div class="card">
+        <h2>Account</h2>
+        <label for="account">Account</label>
+        <select id="account"></select>
+        <label for="month">Invoice Month</label>
+        <input id="month" type="month">
+        <div class="meta" id="acctMeta" style="margin-top:6px"></div>
+      </div>
+
+      <div class="card">
+        <h2 id="formTitle">Order Entry</h2>
+        <div class="row">
+          <div>
+            <label for="orderDate">Order Date</label>
+            <input id="orderDate" type="date">
+          </div>
+          <div>
+            <label for="deliveryDate">Delivery Date</label>
+            <input id="deliveryDate" type="date">
+          </div>
+        </div>
+        <label for="nameTown">Name &amp; Town</label>
+        <input id="nameTown" type="text" placeholder="e.g. Eppie Bacalla, Skokie IL" autocomplete="off">
+        <div class="row">
+          <div>
+            <label for="qty">Qty</label>
+            <input id="qty" type="number" inputmode="numeric" min="1" step="1" value="1">
+          </div>
+          <div>
+            <label for="unitPrice">Unit Price ($)</label>
+            <input id="unitPrice" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00">
+          </div>
+        </div>
+        <div class="total-preview">Total: <span id="totalPreview">$0.00</span></div>
+        <button class="btn block" id="saveBtn" type="button">Add Order</button>
+        <button class="btn ghost block hidden" id="cancelEditBtn" type="button" style="margin-top:6px">Cancel Edit</button>
+      </div>
+    </div>
+    <div>
     <div class="card">
-      <h2>Account</h2>
-      <label for="account">Account</label>
-      <select id="account"></select>
-      <label for="month">Invoice Month</label>
-      <input id="month" type="month">
-      <div class="meta" id="acctMeta" style="margin-top:6px"></div>
+      <h2>Invoice</h2>
+      <div class="invgrid">
+        <div>
+          <label>Bill To</label>
+          <div class="billbox" id="billBox"></div>
+          <button class="btn ghost sm" id="billEditBtn" type="button" style="margin-top:6px">Edit Bill To</button>
+        </div>
+        <div>
+          <label for="invNo">Invoice #</label>
+          <input id="invNo" type="text" readonly>
+          <label for="invDate">Invoice Date</label>
+          <input id="invDate" type="text" readonly>
+          <label for="dueDate">Due Date</label>
+          <input id="dueDate" type="text" readonly>
+          <label for="paidDate">Paid Date</label>
+          <input id="paidDate" type="date">
+          <button class="btn sm" id="paidBtn" type="button" style="margin-top:6px">Save Paid Date</button>
+        </div>
+      </div>
     </div>
 
     <div class="card">
-      <h2 id="formTitle">Order Entry</h2>
-      <div class="row">
-        <div>
-          <label for="orderDate">Order Date</label>
-          <input id="orderDate" type="date">
-        </div>
-        <div>
-          <label for="deliveryDate">Delivery Date</label>
-          <input id="deliveryDate" type="date">
-        </div>
+      <h2 id="listTitle">Orders</h2>
+      <div id="unassignedBox"></div>
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr><th>Order</th><th>Delivery</th><th>Name &amp; Town</th><th class="num">Qty</th><th class="num">Unit</th><th class="num">Total</th><th></th></tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
       </div>
-      <label for="nameTown">Name &amp; Town</label>
-      <input id="nameTown" type="text" placeholder="e.g. Eppie Bacalla, Skokie IL" autocomplete="off">
-      <div class="row">
-        <div>
-          <label for="qty">Qty</label>
-          <input id="qty" type="number" inputmode="numeric" min="1" step="1" value="1">
-        </div>
-        <div>
-          <label for="unitPrice">Unit Price ($)</label>
-          <input id="unitPrice" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00">
-        </div>
-      </div>
-      <div class="total-preview">Total: <span id="totalPreview">$0.00</span></div>
-      <button class="btn block" id="saveBtn" type="button">Add Order</button>
-      <button class="btn ghost block hidden" id="cancelEditBtn" type="button" style="margin-top:6px">Cancel Edit</button>
-    </div>
-  </div>
-
-  <div class="card">
-    <h2>Invoice</h2>
-    <div class="invgrid">
-      <div>
-        <label>Bill To</label>
-        <div class="billbox" id="billBox"></div>
-        <button class="btn ghost sm" id="billEditBtn" type="button" style="margin-top:6px">Edit Bill To</button>
-      </div>
-      <div>
-        <label for="invNo">Invoice #</label>
-        <input id="invNo" type="text" readonly>
-        <label for="invDate">Invoice Date</label>
-        <input id="invDate" type="text" readonly>
-        <label for="dueDate">Due Date</label>
-        <input id="dueDate" type="text" readonly>
-        <label for="paidDate">Paid Date</label>
-        <input id="paidDate" type="date">
-        <button class="btn sm" id="paidBtn" type="button" style="margin-top:6px">Save Paid Date</button>
+      <div class="totalbar"><span>Invoice Total</span><span id="grandTotal">$0.00</span></div>
+      <div class="meta" id="capacityMeta" style="margin-top:4px"></div>
+      <div class="row" style="margin-top:8px">
+        <button class="btn" id="outBtn" type="button">Invoice Output</button>
+        <button class="btn ghost" id="syncBtn" type="button">Sync Output Sheet Month</button>
       </div>
     </div>
-  </div>
-
-  <div class="card">
-    <h2 id="listTitle">Orders</h2>
-    <div id="unassignedBox"></div>
-    <div class="tablewrap">
-      <table>
-        <thead>
-          <tr><th>Order</th><th>Delivery</th><th>Name &amp; Town</th><th class="num">Qty</th><th class="num">Unit</th><th class="num">Total</th><th></th></tr>
-        </thead>
-        <tbody id="rows"></tbody>
-      </table>
-    </div>
-    <div class="totalbar"><span>Invoice Total</span><span id="grandTotal">$0.00</span></div>
-    <div class="meta" id="capacityMeta" style="margin-top:4px"></div>
-    <div class="row" style="margin-top:8px">
-      <button class="btn" id="outBtn" type="button">Invoice Output</button>
-      <button class="btn ghost" id="syncBtn" type="button">Sync Output Sheet Month</button>
     </div>
   </div>
 </div>
