@@ -23,7 +23,7 @@
             border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px 10px; margin-bottom: 10px; }
   .topbar img { height: 58px; width: auto; flex: none; }
   .topbar .title { font-weight: 700; font-size: 18px; }
-  .topbar .btnrow { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 4px; }
+  .topbar .titlerow { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; }
   .btn { background: var(--brand); color: var(--brand-text); border: 0; border-radius: 8px; padding: 9px 14px; font-size: 14px;
          font-weight: 700; cursor: pointer; white-space: nowrap; }
   .btn:hover { background: var(--brand-dark); }
@@ -36,7 +36,7 @@
   @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
   .invgrid { display: grid; grid-template-columns: 1fr 230px; gap: 16px; align-items: start; }
   @media (max-width: 560px) { .invgrid { grid-template-columns: 1fr; } }
-  #invNo { font-size: 28px; font-weight: 800; padding: 6px 9px; }
+  #invNo { font-weight: 800; }
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; }
   .card h2 { margin: 0 0 6px; font-size: 13px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
   label { display: block; font-size: 12px; color: var(--muted); margin: 6px 0 2px; }
@@ -106,10 +106,10 @@
 <div id="app" class="wrap">
   <div class="topbar">
     <img src="logo.png" alt="Glenview Florist">
-    <div class="title">Glenview Florist - Invoice System</div>
-    <div class="btnrow">
-      <button class="btn" id="outTopBtn" type="button">Invoice Output</button>
+    <div class="titlerow">
+      <div class="title">Glenview Florist - Invoice System</div>
       <button class="btn ghost" id="refreshBtn" type="button">Refresh Data</button>
+      <button class="btn" id="outTopBtn" type="button">Invoice Output</button>
     </div>
   </div>
 
