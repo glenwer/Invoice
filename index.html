@@ -65,9 +65,9 @@
   #outOverlay { position: fixed; inset: 0; background: rgba(30,40,15,.55); z-index: 50; overflow: auto; padding: 14px; }
   .outbar { max-width: 820px; margin: 0 auto 10px; display: flex; gap: 8px; justify-content: flex-end; }
   #paper { background: #fff; color: #111; max-width: 820px; margin: 0 auto; padding: 28px 32px; border-radius: 4px; font-family: Arial, Helvetica, sans-serif; font-size: 13px; }
-  #paper .head { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; }
+  #paper .head { display: grid; grid-template-columns: 1fr 1fr 1fr; align-items: start; gap: 16px; }
   #paper .co { line-height: 1.5; }
-  #paper .plogo { display: block; width: 170px; height: auto; margin: 0 0 2px -4px; }   /* ~1.5x the width of the "Glenview Florist" name */
+  #paper .plogo { display: block; width: 170px; height: auto; margin: -9px 0 2px -4px; }   /* ~1.5x the width of the "Glenview Florist" name */
   #paper .shop { font-size: 15px; font-weight: 700; }
   #paper .inv { text-align: right; }
   #paper .inv h1 { margin: 0; font-size: 30px; line-height: 1.1; }
@@ -76,7 +76,7 @@
   #paper .dates td { border: 0; padding: 2px 0; }
   #paper .dates td.k { color: #555; text-align: left; padding-right: 16px; white-space: nowrap; }
   #paper .dates td.v { text-align: right; min-width: 78px; font-weight: 600; }
-  #paper .billto { margin-top: 16px; line-height: 1.5; }
+  #paper .billto { text-align: center; line-height: 1.5; }
   #paper table { margin-top: 14px; font-size: 12.5px; }
   #paper th { background: #eef7d3; color: #222; border: 1px solid #c9d9a0; position: static; text-align: center; font-size: 12px; padding: 5px; }
   #paper td { border: 1px solid #d8e2bd; padding: 5px; }
@@ -520,14 +520,15 @@ function openOutput() {
       '<div class="co"><img class="plogo" src="logo.png" alt="Glenview Florist">' +
         '<div class="shop">Glenview Florist</div>' +
         '1813 Waukegan Road<br>Glenview,IL 60025<br>(847)998-0717<br>glenviewflorist1@gmail.com</div>' +
+      '<div class="billto"><b>Bill To</b><br><b>' + esc(a.bill1) + '</b>' + (a.bill2 ? ' ' + esc(a.bill2) : '') + '<br>' +
+        (a.attn ? 'Attn : ' + esc(a.attn) + '<br>' : '') +
+        (a.addr ? esc(a.addr) + '<br>' : '') + (a.phone ? esc(a.phone) + '<br>' : '') +
+        (a.city ? esc(a.city) + '<br>' : '') + esc(a.email) + '</div>' +
       '<div class="inv"><h1>Invoice</h1><div class="invno"># ' + esc(a.nextInvoice) + '</div>' +
         '<table class="dates"><tr><td class="k">Invoice Date :</td><td class="v">' + esc(d.inv) + '</td></tr>' +
         '<tr><td class="k">Due Date :</td><td class="v">' + esc(d.due) + '</td></tr>' +
         '<tr><td class="k">Paid Date :</td><td class="v">' + esc(isoToMdy(paid)) + '</td></tr></table></div>' +
     '</div>' +
-    '<div class="billto"><b>Bill To</b><br><b>' + esc(a.bill1) + '</b> ' + esc(a.bill2) + '<br>' +
-      (a.attn ? 'Attn : ' + esc(a.attn) + '<br>' : '') +
-      esc(a.addr) + ' &nbsp;' + esc(a.phone) + '<br>' + esc(a.city) + ' &nbsp;' + esc(a.email) + '</div>' +
     '<div style="margin-top:12px;color:#555;font-style:italic">Partial Payment</div>' +
     '<table><thead><tr><th style="width:30px">No</th><th>Order Date</th><th>Delivery Date</th><th>Name &amp; Town</th><th>Qty</th><th>Unit price</th><th>Total price</th><th>Check #</th><th>Amount</th></tr></thead>' +
     '<tbody>' + body + '</tbody></table>' +
