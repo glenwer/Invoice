@@ -49,6 +49,10 @@
   .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
   .row3o { display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 8px; }
   @media (max-width: 560px) { .row3o { grid-template-columns: 1fr 1fr; } .row3o > :last-child { grid-column: 1 / -1; } }
+  .rowcalc { display: grid; grid-template-columns: .7fr 1fr 1fr .9fr 1.1fr 1.2fr; gap: 6px; }
+  @media (max-width: 640px) { .rowcalc { grid-template-columns: 1fr 1fr 1fr; } }
+  .rowcalc input { padding-left: 7px; padding-right: 4px; }
+  th.cnt, td.cnt { text-align: left; width: 56px; padding-left: 10px; color: var(--muted); }
   .readout { padding: 8px 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--tint); font-weight: 700; font-size: 14px; }
   .total-preview { text-align: right; font-weight: 700; margin-top: 6px; }
   .meta { color: var(--muted); font-size: 12px; }
@@ -187,17 +191,11 @@
             <input id="nameTown" type="text" placeholder="e.g. Eppie Bacalla, Skokie IL" autocomplete="off">
           </div>
         </div>
-        <div class="row">
+        <div class="rowcalc">
           <div>
             <label for="qty">Qty</label>
             <input id="qty" type="number" inputmode="numeric" min="1" step="1" value="1">
           </div>
-          <div>
-            <label>Total</label>
-            <div class="readout"><span id="totalPreview">$0.00</span></div>
-          </div>
-        </div>
-        <div class="row3">
           <div>
             <label for="price">Price ($)</label>
             <input id="price" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00">
@@ -210,9 +208,16 @@
             <label for="tax">Tax (%)</label>
             <input id="tax" type="number" inputmode="decimal" min="0" step="0.01">
           </div>
+          <div>
+            <label for="unitPrice">Unit Price ($)</label>
+            <input id="unitPrice" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00">
+          </div>
+          <div>
+            <label>Total</label>
+            <div class="readout"><span id="totalPreview">$0.00</span></div>
+          </div>
         </div>
-        <label for="unitPrice">Unit Price ($) <span class="meta">= Price &times; (1 + Tax) + Delivery</span></label>
-        <input id="unitPrice" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00">
+        <div class="meta" style="margin-top:4px">Unit Price = Price &times; (1 + Tax) + Delivery</div>
         <button class="btn block" id="saveBtn" type="button">Add Order</button>
         <button class="btn ghost block hidden" id="cancelEditBtn" type="button" style="margin-top:6px">Cancel Edit</button>
       </div>
@@ -222,7 +227,7 @@
       <div class="tablewrap">
         <table>
           <thead>
-            <tr><th class="num">Count</th><th>Order</th><th>Delivery</th><th>Name &amp; Town</th><th class="num">Qty</th><th class="num">Unit</th><th class="num">Total</th><th></th></tr>
+            <tr><th class="cnt">Count</th><th>Order</th><th>Delivery</th><th>Name &amp; Town</th><th class="num">Qty</th><th class="num">Unit</th><th class="num">Total</th><th></th></tr>
           </thead>
           <tbody id="rows"></tbody>
         </table>
@@ -435,7 +440,7 @@ function renderRows(data) {
   $('rows').innerHTML = rows.map((r, i) => {
     total += Number(r.total || 0);
     return '<tr>' +
-      '<td class="num">' + (i + 1) + '</td>' +
+      '<td class="cnt">' + (i + 1) + '</td>' +
       '<td>' + esc(isoToMdyFull(r.orderDate)) + '</td>' +
       '<td>' + esc(isoToMdyFull(r.deliveryDate)) + '</td>' +
       '<td>' + esc(r.nameTown) + '</td>' +
