@@ -37,8 +37,7 @@
   .btn.sm { padding: 6px 10px; font-size: 13px; }
   .grid { display: grid; grid-template-columns: 380px 1fr; gap: 10px; align-items: start; }
   @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
-  .invgrid { display: grid; grid-template-columns: 1fr 230px; gap: 16px; align-items: start; }
-  @media (max-width: 560px) { .invgrid { grid-template-columns: 1fr; } }
+  .invgrid { display: grid; grid-template-columns: 1fr 138px; gap: 10px; align-items: start; }
   #invNo { font-weight: 800; }
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; }
   .card h2 { margin: 0 0 6px; font-size: 13px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
@@ -53,7 +52,7 @@
   .msg.ok { display: block; background: var(--ok-bg); color: var(--ok); }
   .msg.err { display: block; background: #fde8e6; color: var(--danger); }
   .warn { background: var(--warn-bg); color: var(--warn); padding: 8px 10px; border-radius: 8px; font-size: 13px; margin-bottom: 8px; }
-  .billbox { border: 1px dashed var(--line); border-radius: 8px; padding: 8px 10px; font-size: 13px; line-height: 1.45; background: var(--tint); }
+  .billbox { border: 1px dashed var(--line); border-radius: 8px; padding: 8px 10px; font-size: 12.5px; overflow-wrap: anywhere; line-height: 1.45; background: var(--tint); }
   .billbox b { font-size: 13px; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
   th, td { padding: 6px 5px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
@@ -147,7 +146,27 @@
         </div>
         <div class="meta" id="acctMeta" style="margin-top:6px"></div>
       </div>
-
+      <div class="card">
+      <h2>Invoice</h2>
+      <div class="invgrid">
+        <div>
+          <label>Bill To</label>
+          <div class="billbox" id="billBox"></div>
+          <button class="btn ghost sm" id="billEditBtn" type="button" style="margin-top:6px">Edit Bill To</button>
+        </div>
+        <div>
+        <label for="invDate">Invoice Date</label>
+          <input id="invDate" type="text" readonly>
+          <label for="dueDate">Due Date</label>
+          <input id="dueDate" type="text" readonly>
+          <label for="paidDate">Paid Date</label>
+          <input id="paidDate" type="date">
+          <button class="btn sm" id="paidBtn" type="button" style="margin-top:6px">Save Paid Date</button>
+        </div>
+      </div>
+    </div>
+    </div>
+    <div>
       <div class="card">
         <h2 id="formTitle">Order Entry</h2>
         <div class="row">
@@ -176,35 +195,13 @@
         <button class="btn block" id="saveBtn" type="button">Add Order</button>
         <button class="btn ghost block hidden" id="cancelEditBtn" type="button" style="margin-top:6px">Cancel Edit</button>
       </div>
-    </div>
-    <div>
-    <div class="card">
-      <h2>Invoice</h2>
-      <div class="invgrid">
-        <div>
-          <label>Bill To</label>
-          <div class="billbox" id="billBox"></div>
-          <button class="btn ghost sm" id="billEditBtn" type="button" style="margin-top:6px">Edit Bill To</button>
-        </div>
-        <div>
-        <label for="invDate">Invoice Date</label>
-          <input id="invDate" type="text" readonly>
-          <label for="dueDate">Due Date</label>
-          <input id="dueDate" type="text" readonly>
-          <label for="paidDate">Paid Date</label>
-          <input id="paidDate" type="date">
-          <button class="btn sm" id="paidBtn" type="button" style="margin-top:6px">Save Paid Date</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
+      <div class="card">
       <h2 id="listTitle">Orders</h2>
       <div id="unassignedBox"></div>
       <div class="tablewrap">
         <table>
           <thead>
-            <tr><th>Order</th><th>Delivery</th><th>Name &amp; Town</th><th class="num">Qty</th><th class="num">Unit</th><th class="num">Total</th><th></th></tr>
+            <tr><th class="num">Count</th><th>Order</th><th>Delivery</th><th>Name &amp; Town</th><th class="num">Qty</th><th class="num">Unit</th><th class="num">Total</th><th></th></tr>
           </thead>
           <tbody id="rows"></tbody>
         </table>
@@ -227,11 +224,11 @@
   <label for="bt2">Bill To 2 (optional)</label><input id="bt2" type="text">
   <label for="btAttn">Attn</label><input id="btAttn" type="text">
   <label for="btAddr">Address</label><input id="btAddr" type="text">
+  <label for="btCity">City, State Zip</label><input id="btCity" type="text">
   <div class="row">
     <div><label for="btPhone">Phone / extra</label><input id="btPhone" type="text"></div>
     <div><label for="btEmail">Email</label><input id="btEmail" type="text"></div>
   </div>
-  <label for="btCity">City, State Zip</label><input id="btCity" type="text">
   <div class="row" style="margin-top:12px">
     <button class="btn" id="billSaveBtn" type="button">Save</button>
     <button class="btn ghost" id="billCancelBtn" type="button">Cancel</button>
@@ -377,7 +374,9 @@ async function refresh() {
   if (!acct) return;
   $('acctMeta').textContent = '';
   $('invNo').value = acct.nextInvoice;
-  $('listTitle').textContent = 'Orders - ' + ($('month').value || 'All');
+  const mv = $('month').value;
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  $('listTitle').textContent = 'Orders - ' + (/^\d{4}-\d{2}$/.test(mv) ? MONTHS[Number(mv.slice(5, 7)) - 1] + ',' + mv.slice(0, 4) : 'All');
   updateInvoiceDates();
   try {
     const data = await api({ action: 'list', account: acct.key, month: $('month').value });
@@ -394,9 +393,10 @@ function sortedRows(data) {
 function renderRows(data) {
   const rows = sortedRows(data);
   let total = 0;
-  $('rows').innerHTML = rows.map((r) => {
+  $('rows').innerHTML = rows.map((r, i) => {
     total += Number(r.total || 0);
     return '<tr>' +
+      '<td class="num">' + (i + 1) + '</td>' +
       '<td>' + esc(isoToMdyFull(r.orderDate)) + '</td>' +
       '<td>' + esc(isoToMdyFull(r.deliveryDate)) + '</td>' +
       '<td>' + esc(r.nameTown) + '</td>' +
@@ -405,7 +405,7 @@ function renderRows(data) {
       '<td class="num">' + money(r.total) + '</td>' +
       '<td class="act"><button data-edit="' + r.row + '">Edit</button><button class="del" data-del="' + r.row + '">Delete</button></td>' +
       '</tr>';
-  }).join('') || '<tr><td colspan="7" class="meta">No orders for this month.</td></tr>';
+  }).join('') || '<tr><td colspan="8" class="meta">No orders for this month.</td></tr>';
   $('grandTotal').textContent = money(total);
   $('capacityMeta').textContent = 'Sheet usage: ' + data.used + ' / ' + data.capacity + ' rows (all months)';
 
