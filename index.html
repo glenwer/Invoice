@@ -46,6 +46,10 @@
   input:focus, select:focus { outline: 2px solid var(--brand-dark); border-color: transparent; }
   input[readonly] { background: var(--tint); }
   .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .row3o { display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 8px; }
+  @media (max-width: 560px) { .row3o { grid-template-columns: 1fr 1fr; } .row3o > :last-child { grid-column: 1 / -1; } }
+  .readout { padding: 8px 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--tint); font-weight: 700; font-size: 14px; }
   .total-preview { text-align: right; font-weight: 700; margin-top: 6px; }
   .meta { color: var(--muted); font-size: 12px; }
   .msg { padding: 8px 12px; border-radius: 8px; margin-bottom: 10px; font-size: 13px; display: none; }
@@ -169,7 +173,7 @@
     <div>
       <div class="card">
         <h2 id="formTitle">Order Entry</h2>
-        <div class="row">
+        <div class="row3o">
           <div>
             <label for="orderDate">Order Date</label>
             <input id="orderDate" type="date">
@@ -178,20 +182,37 @@
             <label for="deliveryDate">Delivery Date</label>
             <input id="deliveryDate" type="date">
           </div>
+          <div>
+            <label for="nameTown">Name &amp; Town</label>
+            <input id="nameTown" type="text" placeholder="e.g. Eppie Bacalla, Skokie IL" autocomplete="off">
+          </div>
         </div>
-        <label for="nameTown">Name &amp; Town</label>
-        <input id="nameTown" type="text" placeholder="e.g. Eppie Bacalla, Skokie IL" autocomplete="off">
         <div class="row">
           <div>
             <label for="qty">Qty</label>
             <input id="qty" type="number" inputmode="numeric" min="1" step="1" value="1">
           </div>
           <div>
-            <label for="unitPrice">Unit Price ($)</label>
-            <input id="unitPrice" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00">
+            <label>Total</label>
+            <div class="readout"><span id="totalPreview">$0.00</span></div>
           </div>
         </div>
-        <div class="total-preview">Total: <span id="totalPreview">$0.00</span></div>
+        <div class="row3">
+          <div>
+            <label for="price">Price ($)</label>
+            <input id="price" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00">
+          </div>
+          <div>
+            <label for="delivery">Delivery ($)</label>
+            <input id="delivery" type="number" inputmode="decimal" min="0" step="0.01">
+          </div>
+          <div>
+            <label for="tax">Tax (%)</label>
+            <input id="tax" type="number" inputmode="decimal" min="0" step="0.01">
+          </div>
+        </div>
+        <label for="unitPrice">Unit Price ($) <span class="meta">= Price &times; (1 + Tax) + Delivery</span></label>
+        <input id="unitPrice" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00">
         <button class="btn block" id="saveBtn" type="button">Add Order</button>
         <button class="btn ghost block hidden" id="cancelEditBtn" type="button" style="margin-top:6px">Cancel Edit</button>
       </div>
@@ -337,9 +358,27 @@ function resetForm() {
   $('deliveryDate').value = todayStr();
   $('nameTown').value = '';
   $('qty').value = 1;
+  $('price').value = '';
+  $('delivery').value = localStorage.getItem('invDelivery') || '15';
+  $('tax').value = localStorage.getItem('invTax') || '11';
   $('unitPrice').value = '';
   updatePreview();
 }
+
+// Unit Price = Price x (1 + Tax%) + Delivery (tax applies to the price only; delivery is added after tax)
+function calcUnit() {
+  const p = parseFloat($('price').value);
+  if (isNaN(p)) return;
+  const d = parseFloat($('delivery').value) || 0;
+  const t = parseFloat($('tax').value) || 0;
+  $('unitPrice').value = (Math.round((p * (1 + t / 100) + d + 1e-9) * 100) / 100).toFixed(2);
+  updatePreview();
+}
+['price', 'delivery', 'tax'].forEach((id) => $(id).addEventListener('input', () => {
+  if (id === 'delivery') localStorage.setItem('invDelivery', $('delivery').value);
+  if (id === 'tax') localStorage.setItem('invTax', $('tax').value);
+  calcUnit();
+}));
 
 function updatePreview() {
   $('totalPreview').textContent = money(Number($('qty').value || 0) * Number($('unitPrice').value || 0));
@@ -429,6 +468,7 @@ function startEdit(r) {
   $('deliveryDate').value = r.deliveryDate;
   $('nameTown').value = r.nameTown;
   $('qty').value = r.qty;
+  $('price').value = '';
   $('unitPrice').value = r.unitPrice;
   updatePreview();
   $('formTitle').scrollIntoView({ behavior: 'smooth', block: 'start' });
