@@ -7,26 +7,29 @@
 <style>
   :root {
     --bg: #f6faea; --card: #ffffff; --text: #26301a; --muted: #6d7a58; --line: #dfeac2;
-    --brand: #a6d84a; --brand-dark: #8bc232; --brand-text: #22330a; --tint: #eef7d3; --danger: #c0262d;
+    --brand: #a6d84a; --brand-dark: #8bc232; --btn: #c4e872; --btn-hover: #b3dc58; --yellow: #fff3b0; --yellow-hover: #ffe97d; --yellow-text: #4a3d00; --brand-text: #22330a; --tint: #eef7d3; --danger: #c0262d;
     --warn-bg: #fff4d6; --warn: #8a5a00; --ok-bg: #eaf6cc; --ok: #3d5a0a;
   }
   @media (prefers-color-scheme: dark) {
     :root { --bg: #151a0f; --card: #1f2616; --text: #eef3e0; --muted: #aab796; --line: #343f24;
-            --brand: #b5e05a; --brand-dark: #a0cc42; --brand-text: #1c2a07; --tint: #2a331b; --danger: #ff8a8f;
+            --brand: #b5e05a; --brand-dark: #a0cc42; --btn: #c9ec7e; --btn-hover: #b9df63; --yellow: #5a4f1a; --yellow-hover: #6d5f1f; --yellow-text: #fff0a0; --brand-text: #1c2a07; --tint: #2a331b; --danger: #ff8a8f;
             --warn-bg: #3a3017; --warn: #f4c95d; --ok-bg: #2a331b; --ok: #cfe99a; }
   }
   * { box-sizing: border-box; }
   body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Apple SD Gothic Neo", sans-serif;
          background: var(--bg); color: var(--text); font-size: 14px; }
   .wrap { max-width: 1100px; margin: 0 auto; padding: 10px 12px; }
-  .topbar { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px; background: var(--tint);
+  .topbar { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; background: var(--tint);
             border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px 10px; margin-bottom: 10px; }
+  .topbar .brand { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
   .topbar img { height: 58px; width: auto; flex: none; }
   .topbar .title { font-weight: 700; font-size: 18px; }
-  .topbar .titlerow { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; }
-  .btn { background: var(--brand); color: var(--brand-text); border: 0; border-radius: 8px; padding: 9px 14px; font-size: 14px;
+  .topbar .actions { display: flex; gap: 8px; align-items: center; }
+  .btn { background: var(--btn); color: var(--brand-text); border: 0; border-radius: 8px; padding: 9px 14px; font-size: 14px;
          font-weight: 700; cursor: pointer; white-space: nowrap; }
-  .btn:hover { background: var(--brand-dark); }
+  .btn:hover { background: var(--btn-hover); }
+  .btn.yellow { background: var(--yellow); color: var(--yellow-text); border: 1px solid rgba(160,130,0,.35); }
+  .btn.yellow:hover { background: var(--yellow-hover); }
   .btn:disabled { opacity: .6; cursor: default; }
   .btn.ghost { background: var(--card); color: var(--text); border: 1px solid var(--line); font-weight: 600; }
   .btn.ghost:hover { background: var(--tint); }
@@ -105,10 +108,12 @@
 
 <div id="app" class="wrap">
   <div class="topbar">
-    <img src="logo.png" alt="Glenview Florist">
-    <div class="titlerow">
+    <div class="brand">
+      <img src="logo.png" alt="Glenview Florist">
       <div class="title">Glenview Florist - Invoice System</div>
-      <button class="btn ghost" id="refreshBtn" type="button">Refresh Data</button>
+    </div>
+    <div class="actions">
+      <button class="btn yellow" id="refreshBtn" type="button">Refresh Data</button>
       <button class="btn" id="outTopBtn" type="button">Invoice Output</button>
     </div>
   </div>
@@ -121,8 +126,25 @@
         <h2>Account</h2>
         <label for="account">Account</label>
         <select id="account"></select>
-        <label for="month">Invoice Month</label>
-        <input id="month" type="month">
+        <div class="row">
+
+          <div>
+
+            <label for="month">Invoice Month</label>
+
+            <input id="month" type="month">
+
+          </div>
+
+          <div>
+
+            <label for="invNo">Invoice #</label>
+
+            <input id="invNo" type="text" readonly>
+
+          </div>
+
+        </div>
         <div class="meta" id="acctMeta" style="margin-top:6px"></div>
       </div>
 
@@ -165,9 +187,7 @@
           <button class="btn ghost sm" id="billEditBtn" type="button" style="margin-top:6px">Edit Bill To</button>
         </div>
         <div>
-          <label for="invNo">Invoice #</label>
-          <input id="invNo" type="text" readonly>
-          <label for="invDate">Invoice Date</label>
+        <label for="invDate">Invoice Date</label>
           <input id="invDate" type="text" readonly>
           <label for="dueDate">Due Date</label>
           <input id="dueDate" type="text" readonly>
@@ -193,7 +213,7 @@
       <div class="meta" id="capacityMeta" style="margin-top:4px"></div>
       <div class="row" style="margin-top:8px">
         <button class="btn" id="outBtn" type="button">Invoice Output</button>
-        <button class="btn ghost" id="syncBtn" type="button">Sync Output Sheet Month</button>
+        <button class="btn yellow" id="syncBtn" type="button">Sync Output Sheet Month</button>
       </div>
     </div>
     </div>
@@ -292,8 +312,8 @@ function renderBill() {
   $('billBox').innerHTML =
     '<b>' + esc(a.bill1) + '</b>' + (a.bill2 ? ' ' + esc(a.bill2) : '') + '<br>' +
     (a.attn ? 'Attn : ' + esc(a.attn) + '<br>' : '') +
-    esc(a.addr) + (a.phone ? ' &nbsp;' + esc(a.phone) : '') + '<br>' +
-    esc(a.city) + '<br>' + esc(a.email);
+    esc(a.addr) + (a.city ? ' &nbsp;' + esc(a.city) : '') + '<br>' +
+    (a.phone ? esc(a.phone) + '<br>' : '') + esc(a.email);
 }
 
 function invoiceDates() {
