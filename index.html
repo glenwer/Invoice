@@ -77,14 +77,13 @@
   dialog { border: 1px solid var(--line); border-radius: 12px; padding: 14px; width: min(460px, 94vw); background: var(--card); color: var(--text); }
   dialog::backdrop { background: rgba(0,0,0,.35); }
 
-  /* ---------- busy indicator ---------- */
-  #busyDlg { width: auto; border: 0; background: transparent; padding: 0; overflow: visible; outline: none; }
-  #busyDlg::backdrop { background: rgba(255,255,255,.45); }
-  @media (prefers-color-scheme: dark) { #busyDlg::backdrop { background: rgba(0,0,0,.45); } }
-  .busybox { display: flex; align-items: center; gap: 12px; background: var(--card); color: var(--text); border: 1px solid var(--line);
-             border-radius: 12px; padding: 14px 22px; box-shadow: 0 8px 28px rgba(0,0,0,.22); font-weight: 700; font-size: 15px; }
-  .hourglass { font-size: 28px; display: inline-block; animation: flip 1.4s ease-in-out infinite; }
+  /* ---------- busy indicator (small, in the top bar between the title and the buttons) ---------- */
+  .busyinline { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; align-self: flex-end; padding-bottom: 4px;
+                font-size: 13px; font-weight: 700; color: var(--text); visibility: hidden; min-width: 90px; }
+  .busyinline.on { visibility: visible; }
+  .hourglass { font-size: 20px; display: inline-block; animation: flip 1.4s ease-in-out infinite; }
   @keyframes flip { 0% { transform: rotate(0deg); } 50% { transform: rotate(180deg); } 100% { transform: rotate(360deg); } }
+  #busyShield { position: fixed; inset: 0; z-index: 100; background: transparent; cursor: progress; }
 
   /* ---------- Invoice output overlay ---------- */
   #outOverlay { position: fixed; inset: 0; background: rgba(30,40,15,.55); z-index: 50; overflow: auto; padding: 14px; }
@@ -103,7 +102,7 @@
   #paper .invno { font-size: 22px; font-weight: 700; margin-top: 2px; }
   #paper .dates { margin: 10px 0 0 auto; font-size: 13px; border-collapse: collapse; }
   #paper .dates td { border: 0; padding: 2px 0; }
-  #paper .dates td.k { color: #555; text-align: left; padding-right: 6px; white-space: nowrap; }
+  #paper .dates td.k { color: #555; text-align: right; padding-right: 6px; white-space: nowrap; }
   #paper .dates td.v { text-align: right; font-weight: 600; white-space: nowrap; }
   #paper .billto { text-align: center; line-height: 1.5; }
   #paper table { margin-top: 14px; font-size: 12.5px; }
@@ -130,6 +129,7 @@
       <img src="logo.png" alt="Glenview Florist">
       <div class="title">Glenview Florist - Invoice System</div>
     </div>
+    <div class="busyinline" id="busyInline"><span class="hourglass">&#8987;</span><span id="busyText">Working...</span></div>
     <div class="actions">
       <button class="btn yellow" id="refreshBtn" type="button">Refresh Data</button>
       <button class="btn" id="outTopBtn" type="button">Invoice Output</button>
@@ -274,10 +274,7 @@
   <div class="meta" style="margin-top:6px">Saved to the Accounts tab and this account's output invoice sheet.</div>
 </dialog>
 
-<!-- Busy indicator -->
-<dialog id="busyDlg">
-  <div class="busybox"><span class="hourglass">&#8987;</span><span id="busyText">Working...</span></div>
-</dialog>
+<div id="busyShield" class="hidden"></div>
 
 <!-- Delete confirmation -->
 <dialog id="delDlg">
@@ -347,18 +344,20 @@ function showMsg(text, ok) {
 const BUSY_TEXT = { accounts: 'Loading...', list: 'Loading...', add: 'Saving...', update: 'Saving...', delete: 'Deleting...',
                     saveBillTo: 'Saving...', saveInvoiceInfo: 'Saving...', addAccount: 'Creating account...', setOutputMonth: 'Syncing...' };
 let busyCount = 0, busyTimer = null;
-$('busyDlg').addEventListener('cancel', (e) => e.preventDefault());
 function busyOn(text) {
   busyCount++;
   clearTimeout(busyTimer);
   $('busyText').textContent = text;
-  if (!$('busyDlg').open) $('busyDlg').showModal();
+  $('busyInline').classList.add('on');
+  $('busyShield').classList.remove('hidden');   // invisible layer that blocks clicks while working
 }
 function busyOff() {
   busyCount = Math.max(0, busyCount - 1);
   if (busyCount === 0) {
     clearTimeout(busyTimer);
-    busyTimer = setTimeout(() => { if (busyCount === 0 && $('busyDlg').open) $('busyDlg').close(); }, 150);
+    busyTimer = setTimeout(() => {
+      if (busyCount === 0) { $('busyInline').classList.remove('on'); $('busyShield').classList.add('hidden'); }
+    }, 150);
   }
 }
 
@@ -650,6 +649,7 @@ $('billEditBtn').onclick = () => {
 $('billCancelBtn').onclick = () => $('billDlg').close();
 $('billSaveBtn').onclick = async () => {
   const btn = $('billSaveBtn');
+  btn.textContent = 'Saving...';
   const a = currentAccount();
   const f = { bill1: $('bt1').value, bill2: $('bt2').value, attn: $('btAttn').value, addr: $('btAddr').value,
               phone: $('btPhone').value, city: $('btCity').value, email: $('btEmail').value };
@@ -663,7 +663,7 @@ $('billSaveBtn').onclick = async () => {
     $('billDlg').close();
     showMsg('Bill To saved.', true);
   } catch (e) { showMsg(e.message, false); }
-  btn.disabled = false;
+  btn.disabled = false; btn.textContent = 'Save';
 };
 
 
