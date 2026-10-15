@@ -34,6 +34,8 @@
   .btn.ghost { background: var(--card); color: var(--text); border: 1px solid var(--line); font-weight: 600; }
   .btn.ghost:hover { background: var(--tint); }
   .btn.block { width: 100%; margin-top: 10px; padding: 11px; font-size: 15px; }
+  .btn.danger { background: #e5484d; color: #fff; }
+  .btn.danger:hover { background: #cf3338; }
   .btn.sm { padding: 6px 10px; font-size: 13px; }
   .grid { display: grid; grid-template-columns: 380px 1fr; gap: 10px; align-items: start; }
   @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
@@ -165,12 +167,12 @@
         </div>
         <div>
         <label for="invDate">Invoice Date</label>
-          <input id="invDate" type="text" readonly>
+          <input id="invDate" type="date">
           <label for="dueDate">Due Date</label>
-          <input id="dueDate" type="text" readonly>
+          <input id="dueDate" type="date">
           <label for="paidDate">Paid Date</label>
           <input id="paidDate" type="date">
-          <button class="btn sm" id="paidBtn" type="button" style="margin-top:6px">Save Paid Date</button>
+          <button class="btn sm" id="paidBtn" type="button" style="margin-top:6px">Save Dates</button>
         </div>
       </div>
     </div>
@@ -261,6 +263,16 @@
     <button class="btn ghost" id="billCancelBtn" type="button">Cancel</button>
   </div>
   <div class="meta" style="margin-top:6px">Saved to the Accounts tab and this account's output invoice sheet.</div>
+</dialog>
+
+<!-- Delete confirmation -->
+<dialog id="delDlg">
+  <h2 style="margin:0 0 6px;font-size:16px">Delete Order</h2>
+  <div id="delText" style="margin:8px 0 14px;line-height:1.5"></div>
+  <div class="row">
+    <button class="btn danger" id="delOk" type="button">Delete</button>
+    <button class="btn ghost" id="delCancel" type="button">Cancel</button>
+  </div>
 </dialog>
 
 <!-- Add Account -->
@@ -361,20 +373,35 @@ function renderBill() {
     (a.phone ? esc(a.phone) + '<br>' : '') + esc(a.email);
 }
 
-function invoiceDates() {
+const isoOf = (d) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+function addDaysIso(iso, n) {
+  const p = iso.split('-').map(Number);
+  return isoOf(new Date(p[0], p[1] - 1, p[2] + n));
+}
+let dirtyDue = false;
+// defaults: Invoice Date = last day of the month, Due Date = Invoice Date + 15 days
+function defaultDates() {
   const m = $('month').value;
   if (!/^\d{4}-\d{2}$/.test(m)) return null;
-  const y = Number(m.slice(0, 4)), mo = Number(m.slice(5, 7));
-  const inv = new Date(y, mo, 0);
-  const due = new Date(inv.getFullYear(), inv.getMonth(), inv.getDate() + 15);
-  return { inv: mdy(inv), due: mdy(due) };
+  const inv = new Date(Number(m.slice(0, 4)), Number(m.slice(5, 7)), 0);
+  const iso = isoOf(inv);
+  return { inv: iso, due: addDaysIso(iso, 15) };
 }
-
-function updateInvoiceDates() {
-  const d = invoiceDates();
+function setDefaultDates() {
+  const d = defaultDates();
   $('invDate').value = d ? d.inv : '';
   $('dueDate').value = d ? d.due : '';
+  dirtyDue = false;
 }
+function applyDates(data) {
+  const d = defaultDates();
+  $('invDate').value = data.invoiceDate || (d ? d.inv : '');
+  $('dueDate').value = data.dueDate || (d ? d.due : '');
+  $('paidDate').value = data.paidDate || '';
+  dirtyDue = false;
+}
+$('invDate').addEventListener('change', () => { if (!dirtyDue && $('invDate').value) $('dueDate').value = addDaysIso($('invDate').value, 15); });
+$('dueDate').addEventListener('change', () => { dirtyDue = true; });
 
 function resetForm() {
   editingRow = null; dirtyDelivery = false;
@@ -443,11 +470,11 @@ async function refresh() {
   const mv = $('month').value;
   const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   $('listTitle').textContent = 'Orders - ' + (/^\d{4}-\d{2}$/.test(mv) ? MONTHS[Number(mv.slice(5, 7)) - 1] + ',' + mv.slice(0, 4) : 'All');
-  updateInvoiceDates();
+  setDefaultDates();
   try {
     const data = await api({ action: 'list', account: acct.key, month: $('month').value });
     lastData = data;
-    $('paidDate').value = data.paidDate || '';
+    applyDates(data);
     renderRows(data);
   } catch (e) { showMsg(e.message, false); }
 }
@@ -463,8 +490,8 @@ function renderRows(data) {
     total += Number(r.total || 0);
     return '<tr>' +
       '<td class="cnt">' + (i + 1) + '</td>' +
-      '<td>' + esc(isoToMdyFull(r.orderDate)) + '</td>' +
-      '<td>' + esc(isoToMdyFull(r.deliveryDate)) + '</td>' +
+      '<td>' + esc(isoToMdy(r.orderDate)) + '</td>' +
+      '<td>' + esc(isoToMdy(r.deliveryDate)) + '</td>' +
       '<td>' + esc(r.nameTown) + '</td>' +
       '<td class="num">' + esc(r.qty) + '</td>' +
       '<td class="num">' + money(r.unitPrice) + '</td>' +
@@ -501,8 +528,21 @@ function startEdit(r) {
   $('formTitle').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+function confirmDelete(r) {
+  return new Promise((resolve) => {
+    const dlg = $('delDlg');
+    let settled = false;
+    const finish = (v) => { if (settled) return; settled = true; $('delOk').onclick = null; $('delCancel').onclick = null; dlg.onclose = null; if (dlg.open) dlg.close(); resolve(v); };
+    $('delText').innerHTML = 'Delete this order?<br><b>' + esc(r.nameTown) + '</b><br>' + esc(isoToMdy(r.deliveryDate)) + ' &nbsp;&middot;&nbsp; ' + money(r.total);
+    $('delOk').onclick = () => finish(true);
+    $('delCancel').onclick = () => finish(false);
+    dlg.onclose = () => finish(false);
+    dlg.showModal();
+  });
+}
+
 async function removeRow(r) {
-  if (!confirm('Delete this order?\n' + r.deliveryDate + '  ' + r.nameTown + '  ' + money(r.total))) return;
+  if (!(await confirmDelete(r))) return;
   try {
     await api({ action: 'delete', account: currentAccount().key, row: r.row });
     showMsg('Deleted.', true);
@@ -543,9 +583,10 @@ $('paidBtn').onclick = async () => {
   const btn = $('paidBtn');
   btn.disabled = true;
   try {
-    await api({ action: 'savePaid', account: currentAccount().key, month: $('month').value, paidDate: $('paidDate').value });
+    await api({ action: 'saveInvoiceInfo', account: currentAccount().key, month: $('month').value,
+                invoiceDate: $('invDate').value, dueDate: $('dueDate').value, paidDate: $('paidDate').value });
     lastData.paidDate = $('paidDate').value;
-    showMsg($('paidDate').value ? 'Paid Date saved.' : 'Paid Date cleared.', true);
+    showMsg('Invoice dates saved.', true);
   } catch (e) { showMsg(e.message, false); }
   btn.disabled = false;
 };
@@ -620,8 +661,8 @@ $('acSaveBtn').onclick = async () => {
 // ---------- Invoice output (same layout as the Mary Weeks sample) ----------
 function openOutput() {
   const a = currentAccount();
-  const d = invoiceDates();
-  if (!a || !d) { showMsg('Select an account and invoice month first.', false); return; }
+  const d = { inv: isoToMdyFull($('invDate').value), due: isoToMdyFull($('dueDate').value) };
+  if (!a || !$('month').value || !d.inv) { showMsg('Select an account and invoice month first.', false); return; }
   const rows = sortedRows(lastData);
   let total = 0;
   const body = rows.map((r, i) => {
