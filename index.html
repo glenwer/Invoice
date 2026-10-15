@@ -77,6 +77,15 @@
   dialog { border: 1px solid var(--line); border-radius: 12px; padding: 14px; width: min(460px, 94vw); background: var(--card); color: var(--text); }
   dialog::backdrop { background: rgba(0,0,0,.35); }
 
+  /* ---------- busy indicator ---------- */
+  #busyDlg { width: auto; border: 0; background: transparent; padding: 0; overflow: visible; outline: none; }
+  #busyDlg::backdrop { background: rgba(255,255,255,.45); }
+  @media (prefers-color-scheme: dark) { #busyDlg::backdrop { background: rgba(0,0,0,.45); } }
+  .busybox { display: flex; align-items: center; gap: 12px; background: var(--card); color: var(--text); border: 1px solid var(--line);
+             border-radius: 12px; padding: 14px 22px; box-shadow: 0 8px 28px rgba(0,0,0,.22); font-weight: 700; font-size: 15px; }
+  .hourglass { font-size: 28px; display: inline-block; animation: flip 1.4s ease-in-out infinite; }
+  @keyframes flip { 0% { transform: rotate(0deg); } 50% { transform: rotate(180deg); } 100% { transform: rotate(360deg); } }
+
   /* ---------- Invoice output overlay ---------- */
   #outOverlay { position: fixed; inset: 0; background: rgba(30,40,15,.55); z-index: 50; overflow: auto; padding: 14px; }
   .outbar { max-width: 820px; margin: 0 auto 10px; display: flex; gap: 8px; justify-content: flex-end; }
@@ -94,8 +103,8 @@
   #paper .invno { font-size: 22px; font-weight: 700; margin-top: 2px; }
   #paper .dates { margin: 10px 0 0 auto; font-size: 13px; border-collapse: collapse; }
   #paper .dates td { border: 0; padding: 2px 0; }
-  #paper .dates td.k { color: #555; text-align: left; padding-right: 16px; white-space: nowrap; }
-  #paper .dates td.v { text-align: right; min-width: 78px; font-weight: 600; }
+  #paper .dates td.k { color: #555; text-align: left; padding-right: 6px; white-space: nowrap; }
+  #paper .dates td.v { text-align: right; font-weight: 600; white-space: nowrap; }
   #paper .billto { text-align: center; line-height: 1.5; }
   #paper table { margin-top: 14px; font-size: 12.5px; }
   #paper th { background: #eef7d3; color: #222; border: 1px solid #c9d9a0; position: static; text-align: center; font-size: 12px; padding: 5px; }
@@ -265,6 +274,11 @@
   <div class="meta" style="margin-top:6px">Saved to the Accounts tab and this account's output invoice sheet.</div>
 </dialog>
 
+<!-- Busy indicator -->
+<dialog id="busyDlg">
+  <div class="busybox"><span class="hourglass">&#8987;</span><span id="busyText">Working...</span></div>
+</dialog>
+
 <!-- Delete confirmation -->
 <dialog id="delDlg">
   <h2 style="margin:0 0 6px;font-size:16px">Delete Order</h2>
@@ -330,15 +344,36 @@ function showMsg(text, ok) {
   if (ok) setTimeout(() => { if (el.textContent === text) el.className = 'msg'; }, 3500);
 }
 
+const BUSY_TEXT = { accounts: 'Loading...', list: 'Loading...', add: 'Saving...', update: 'Saving...', delete: 'Deleting...',
+                    saveBillTo: 'Saving...', saveInvoiceInfo: 'Saving...', addAccount: 'Creating account...', setOutputMonth: 'Syncing...' };
+let busyCount = 0, busyTimer = null;
+$('busyDlg').addEventListener('cancel', (e) => e.preventDefault());
+function busyOn(text) {
+  busyCount++;
+  clearTimeout(busyTimer);
+  $('busyText').textContent = text;
+  if (!$('busyDlg').open) $('busyDlg').showModal();
+}
+function busyOff() {
+  busyCount = Math.max(0, busyCount - 1);
+  if (busyCount === 0) {
+    clearTimeout(busyTimer);
+    busyTimer = setTimeout(() => { if (busyCount === 0 && $('busyDlg').open) $('busyDlg').close(); }, 150);
+  }
+}
+
 async function api(payload) {
-  const res = await fetch(API_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },   // avoids CORS preflight
-    body: JSON.stringify(payload)
-  });
-  const data = await res.json();
-  if (!data.ok) throw new Error(data.error || 'Request failed');
-  return data;
+  busyOn(BUSY_TEXT[payload.action] || 'Working...');
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },   // avoids CORS preflight
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'Request failed');
+    return data;
+  } finally { busyOff(); }
 }
 
 // ---------- App ----------
