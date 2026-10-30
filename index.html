@@ -88,36 +88,37 @@
 
   /* ---------- Invoice output overlay ---------- */
   #outOverlay { position: fixed; inset: 0; background: rgba(30,40,15,.55); z-index: 50; overflow: auto; padding: 14px; }
-  .outbar { max-width: 820px; margin: 0 auto 10px; display: flex; gap: 8px; justify-content: flex-end; }
-  #paper { background: #fff; color: #111; max-width: 820px; margin: 0 auto; padding: 28px 32px; border-radius: 4px; font-family: Arial, Helvetica, sans-serif; font-size: 13px; }
-  #paper .head { display: grid; grid-template-columns: 1fr 1fr 1fr; align-items: start; gap: 16px; }
-  #paper .head > .logo { grid-column: 1; grid-row: 1; }
-  #paper .co { grid-column: 1; grid-row: 2; line-height: 1.5; }
-  #paper .billto { grid-column: 2; grid-row: 2; }
-  #paper .inv { grid-column: 3; grid-row: 1 / span 2; }
-  #paper .co { line-height: 1.5; }
-  #paper .plogo { display: block; width: 170px; height: auto; margin: -9px 0 2px -4px; }   /* ~1.5x the width of the "Glenview Florist" name */
-  #paper .shop { font-size: 15px; font-weight: 700; }
-  #paper .inv { text-align: right; }
-  #paper .inv h1 { margin: 0; font-size: 30px; line-height: 1.1; }
-  #paper .invno { font-size: 22px; font-weight: 700; margin-top: 2px; }
-  #paper .dates { margin: 10px 0 0 auto; font-size: 13px; border-collapse: collapse; }
-  #paper .dates td { border: 0; padding: 2px 0; }
-  #paper .dates td.k { color: #555; text-align: right; padding-right: 6px; white-space: nowrap; }
-  #paper .dates td.v { text-align: right; font-weight: 600; white-space: nowrap; }
-  #paper .billto { text-align: center; line-height: 1.5; }
-  #paper table { margin-top: 14px; font-size: 12.5px; }
-  #paper th { background: #eef7d3; color: #222; border: 1px solid #c9d9a0; position: static; text-align: center; font-size: 12px; padding: 5px; }
-  #paper td { border: 1px solid #d8e2bd; padding: 5px; }
-  #paper .sum { margin-top: 12px; display: flex; justify-content: space-between; align-items: flex-end; }
-  #paper .sum table { width: 260px; margin: 0; }
-  #paper .sum td { border: 0; border-bottom: 1px solid #ddd; }
+  .outbar { max-width: 820px; margin: 0 auto 10px; display: flex; gap: 8px; justify-content: flex-end; align-items: center; }
+  #outStatus { flex: 1; color: #fff; font-size: 13px; font-weight: 600; }
+  .paper { background: #fff; color: #111; max-width: 820px; margin: 0 auto; padding: 28px 32px; border-radius: 4px; font-family: Arial, Helvetica, sans-serif; font-size: 13px; }
+  .paper .head { display: grid; grid-template-columns: 1fr 1fr 1fr; align-items: start; gap: 16px; }
+  .paper .head > .logo { grid-column: 1; grid-row: 1; }
+  .paper .co { grid-column: 1; grid-row: 2; line-height: 1.5; }
+  .paper .billto { grid-column: 2; grid-row: 2; }
+  .paper .inv { grid-column: 3; grid-row: 1 / span 2; }
+  .paper .co { line-height: 1.5; }
+  .paper .plogo { display: block; width: 170px; height: 65px; margin: -9px 0 2px -4px; }   /* ~1.5x the width of the "Glenview Florist" name */
+  .paper .shop { font-size: 15px; font-weight: 700; }
+  .paper .inv { text-align: right; }
+  .paper .inv h1 { margin: 0; font-size: 30px; line-height: 1.1; }
+  .paper .invno { font-size: 22px; font-weight: 700; margin-top: 2px; }
+  .paper .dates { margin: 10px 0 0 auto; font-size: 13px; border-collapse: collapse; }
+  .paper .dates td { border: 0; padding: 2px 0; }
+  .paper .dates td.k { color: #555; text-align: right; padding-right: 6px; white-space: nowrap; }
+  .paper .dates td.v { text-align: right; font-weight: 600; white-space: nowrap; }
+  .paper .billto { text-align: center; line-height: 1.5; }
+  .paper table { margin-top: 14px; font-size: 12.5px; }
+  .paper th { background: #eef7d3; color: #222; border: 1px solid #c9d9a0; position: static; text-align: center; font-size: 12px; padding: 5px; }
+  .paper td { border: 1px solid #d8e2bd; padding: 5px; }
+  .paper .sum { margin-top: 12px; display: flex; justify-content: space-between; align-items: flex-end; }
+  .paper .sum table { width: 260px; margin: 0; }
+  .paper .sum td { border: 0; border-bottom: 1px solid #ddd; }
   @media print {
     body { background: #fff; }
     #app, dialog { display: none !important; }
     #outOverlay { position: static; background: #fff; padding: 0; overflow: visible; }
     .outbar { display: none; }
-    #paper { box-shadow: none; max-width: none; padding: 0; }
+    .paper { box-shadow: none; max-width: none; padding: 0; }
     @page { margin: 14mm; }
   }
 </style>
@@ -311,11 +312,12 @@
 <!-- Invoice output -->
 <div id="outOverlay" class="hidden">
   <div class="outbar">
+    <span id="outStatus"></span>
     <button class="btn" id="pdfBtn" type="button">Download PDF</button>
     <button class="btn ghost" id="printBtn" type="button">Print</button>
     <button class="btn ghost" id="closeOutBtn" type="button">Close</button>
   </div>
-  <div id="paper"></div>
+  <div id="paper" class="paper"></div>
 </div>
 
 <script>
@@ -340,6 +342,7 @@ function showMsg(text, ok) {
   const el = $('msg');
   el.textContent = text;
   el.className = 'msg ' + (ok ? 'ok' : 'err');
+  $('outStatus').textContent = text;
   if (ok) setTimeout(() => { if (el.textContent === text) el.className = 'msg'; }, 3500);
 }
 
@@ -516,7 +519,8 @@ async function refresh() {
     const data = await api({ action: 'list', account: acct.key, month: $('month').value });
     lastData = data;
     applyDates(data);
-    $('invNo').value = data.invoiceNo || acct.nextInvoice;
+    $('invNo').value = data.invoiceNo || data.suggestedInvoiceNo || acct.nextInvoice;
+    $('acctMeta').textContent = data.invoiceNo ? '' : 'Invoice # not saved for this month yet (saved when you press Invoice Output or Save Dates).';
     renderRows(data);
   } catch (e) { showMsg(e.message, false); }
 }
@@ -632,9 +636,13 @@ async function saveInvoiceInfo(okText) {
     lastData.paidDate = $('paidDate').value;
     lastData.invoiceNo = $('invNo').value;
     if (res.nextInvoice) acct.nextInvoice = res.nextInvoice;
-    showMsg(okText, true);
+    if (okText) showMsg(okText, true);
+    $('acctMeta').textContent = '';
+    btn.disabled = false;
+    return true;
   } catch (e) { showMsg(e.message, false); }
   btn.disabled = false;
+  return false;
 }
 $('paidBtn').onclick = () => saveInvoiceInfo('Invoice info saved.');
 $('invNo').addEventListener('change', () => saveInvoiceInfo('Invoice # saved.'));
@@ -708,10 +716,11 @@ $('acSaveBtn').onclick = async () => {
 };
 
 // ---------- Invoice output (same layout as the Mary Weeks sample) ----------
-function openOutput() {
+async function openOutput() {
   const a = currentAccount();
   const d = { inv: isoToMdyFull($('invDate').value), due: isoToMdyFull($('dueDate').value) };
   if (!a || !$('month').value || !d.inv) { showMsg('Select an account and invoice month first.', false); return; }
+  if (!(await saveInvoiceInfo(null))) return;   // keep the sheet in step with the number and dates printed on the invoice
   const rows = sortedRows(lastData);
   let total = 0;
   const body = rows.map((r, i) => {
@@ -760,20 +769,28 @@ function pdfName() {
 async function makePdf() {
   if (!window.html2pdf) { showMsg('The PDF library could not be loaded. Check the internet connection and reload.', false); return; }
   busyOn('Creating PDF...');
+  const W = 741;   // html2pdf lays the page out at the letter-size printable width (about 741px)
+  const host = document.createElement('div');
+  host.style.cssText = 'position:absolute;left:0;top:0;z-index:-1;width:' + W + 'px;background:#fff;';
+  const copy = $('paper').cloneNode(true);
+  copy.removeAttribute('id');
+  copy.style.cssText = 'max-width:none;width:100%;margin:0;box-sizing:border-box;';
+  host.appendChild(copy);
+  document.body.appendChild(host);
   try {
-    const imgs = Array.from($('paper').querySelectorAll('img'));
+    const imgs = Array.from(copy.querySelectorAll('img'));
     await Promise.all(imgs.map((im) => im.complete ? null : new Promise((r) => { im.onload = im.onerror = r; })));
     await html2pdf().set({
       margin: [10, 10, 10, 10],
       filename: pdfName(),
       image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollY: 0 },
+      html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
       jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' },
       pagebreak: { mode: ['css', 'legacy'] }
-    }).from($('paper')).save();
+    }).from(copy).save();
     showMsg('PDF saved: ' + pdfName(), true);
   } catch (e) { showMsg('PDF failed: ' + (e && e.message || e), false); }
-  finally { busyOff(); }
+  finally { host.remove(); busyOff(); }
 }
 
 $('pdfBtn').onclick = makePdf;
