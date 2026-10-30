@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Glenview Florist - Invoice System</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
   :root {
     --bg: #f6faea; --card: #ffffff; --text: #26301a; --muted: #6d7a58; --line: #dfeac2;
@@ -310,7 +311,8 @@
 <!-- Invoice output -->
 <div id="outOverlay" class="hidden">
   <div class="outbar">
-    <button class="btn" id="printBtn" type="button">Print / Save PDF</button>
+    <button class="btn" id="pdfBtn" type="button">Download PDF</button>
+    <button class="btn ghost" id="printBtn" type="button">Print</button>
     <button class="btn ghost" id="closeOutBtn" type="button">Close</button>
   </div>
   <div id="paper"></div>
@@ -742,8 +744,39 @@ function openOutput() {
     '<table><tr><td><b>Invoice Total</b></td><td style="text-align:right"><b>' + money(total) + '</b></td></tr>' +
     '<tr><td><b>Balance Due</b></td><td style="text-align:right"><b>' + money(balance) + '</b></td></tr></table></div>';
   $('outOverlay').classList.remove('hidden');
+  $('outOverlay').scrollTop = 0;
+  setTimeout(makePdf, 60);   // create the PDF automatically
 }
 
+// ---------- PDF: "MM-DD-YY Account Name.pdf" (MM-DD-YY = Invoice Date) ----------
+function pdfName() {
+  const a = currentAccount();
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec($('invDate').value);
+  const date = m ? m[2] + '-' + m[3] + '-' + m[1].slice(2) : 'invoice';
+  const name = (a.bill1 + (a.bill2 ? ' ' + a.bill2 : '')).replace(/[\\/:*?"<>|]/g, '').replace(/\s+/g, ' ').trim();
+  return date + ' ' + name + '.pdf';
+}
+
+async function makePdf() {
+  if (!window.html2pdf) { showMsg('The PDF library could not be loaded. Check the internet connection and reload.', false); return; }
+  busyOn('Creating PDF...');
+  try {
+    const imgs = Array.from($('paper').querySelectorAll('img'));
+    await Promise.all(imgs.map((im) => im.complete ? null : new Promise((r) => { im.onload = im.onerror = r; })));
+    await html2pdf().set({
+      margin: [10, 10, 10, 10],
+      filename: pdfName(),
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollY: 0 },
+      jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' },
+      pagebreak: { mode: ['css', 'legacy'] }
+    }).from($('paper')).save();
+    showMsg('PDF saved: ' + pdfName(), true);
+  } catch (e) { showMsg('PDF failed: ' + (e && e.message || e), false); }
+  finally { busyOff(); }
+}
+
+$('pdfBtn').onclick = makePdf;
 $('outTopBtn').onclick = openOutput;
 $('outBtn').onclick = openOutput;
 $('closeOutBtn').onclick = () => $('outOverlay').classList.add('hidden');
