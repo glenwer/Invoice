@@ -159,7 +159,7 @@
 
             <label for="invNo">Invoice #</label>
 
-            <input id="invNo" type="text" readonly>
+            <input id="invNo" type="number" inputmode="numeric" min="1" step="1">
 
           </div>
 
@@ -505,7 +505,7 @@ async function refresh() {
   const acct = currentAccount();
   if (!acct) return;
   $('acctMeta').textContent = '';
-  $('invNo').value = acct.nextInvoice;
+  $('invNo').value = acct.nextInvoice;   // replaced by the saved number for this month, if any (below)
   const mv = $('month').value;
   const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   $('listTitle').textContent = 'Orders - ' + (/^\d{4}-\d{2}$/.test(mv) ? MONTHS[Number(mv.slice(5, 7)) - 1] + ',' + mv.slice(0, 4) : 'All');
@@ -514,6 +514,7 @@ async function refresh() {
     const data = await api({ action: 'list', account: acct.key, month: $('month').value });
     lastData = data;
     applyDates(data);
+    $('invNo').value = data.invoiceNo || acct.nextInvoice;
     renderRows(data);
   } catch (e) { showMsg(e.message, false); }
 }
@@ -618,17 +619,23 @@ $('saveBtn').onclick = async () => {
 };
 
 // ---------- Paid Date / sheet month / Bill To ----------
-$('paidBtn').onclick = async () => {
+async function saveInvoiceInfo(okText) {
   const btn = $('paidBtn');
   btn.disabled = true;
   try {
-    await api({ action: 'saveInvoiceInfo', account: currentAccount().key, month: $('month').value,
-                invoiceDate: $('invDate').value, dueDate: $('dueDate').value, paidDate: $('paidDate').value });
+    const acct = currentAccount();
+    const res = await api({ action: 'saveInvoiceInfo', account: acct.key, month: $('month').value,
+                            invoiceNo: $('invNo').value, invoiceDate: $('invDate').value, dueDate: $('dueDate').value,
+                            paidDate: $('paidDate').value });
     lastData.paidDate = $('paidDate').value;
-    showMsg('Invoice dates saved.', true);
+    lastData.invoiceNo = $('invNo').value;
+    if (res.nextInvoice) acct.nextInvoice = res.nextInvoice;
+    showMsg(okText, true);
   } catch (e) { showMsg(e.message, false); }
   btn.disabled = false;
-};
+}
+$('paidBtn').onclick = () => saveInvoiceInfo('Invoice info saved.');
+$('invNo').addEventListener('change', () => saveInvoiceInfo('Invoice # saved.'));
 
 $('syncBtn').onclick = async () => {
   const btn = $('syncBtn');
@@ -723,7 +730,7 @@ function openOutput() {
         (a.attn ? 'Attn : ' + esc(a.attn) + '<br>' : '') +
         (a.addr ? esc(a.addr) + '<br>' : '') + (a.city ? esc(a.city) + '<br>' : '') +
         (a.phone ? esc(a.phone) + '<br>' : '') + esc(a.email) + '</div>' +
-      '<div class="inv"><h1>Invoice</h1><div class="invno"># ' + esc(a.nextInvoice) + '</div>' +
+      '<div class="inv"><h1>Invoice</h1><div class="invno"># ' + esc($('invNo').value) + '</div>' +
         '<table class="dates"><tr><td class="k">Invoice Date :</td><td class="v">' + esc(d.inv) + '</td></tr>' +
         '<tr><td class="k">Due Date :</td><td class="v">' + esc(d.due) + '</td></tr>' +
         '<tr><td class="k">Paid Date :</td><td class="v">' + esc(isoToMdyFull(paid)) + '</td></tr></table></div>' +
