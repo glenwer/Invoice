@@ -721,14 +721,14 @@ async function openOutput() {
   const d = { inv: isoToMdyFull($('invDate').value), due: isoToMdyFull($('dueDate').value) };
   if (!a || !$('month').value || !d.inv) { showMsg('Select an account and invoice month first.', false); return; }
   if (!(await saveInvoiceInfo(null))) return;   // keep the sheet in step with the number and dates printed on the invoice
-  const rows = sortedRows(lastData);
+  const rows = lastData.rows.slice().sort((x, y) => (x.orderDate + x.deliveryDate + String(x.row).padStart(4, '0')).localeCompare(y.orderDate + y.deliveryDate + String(y.row).padStart(4, '0')));
   let total = 0;
   const body = rows.map((r, i) => {
     total += Number(r.total || 0);
     return '<tr><td style="text-align:center">' + (i + 1) + '</td><td>' + esc(isoToMdyFull(r.orderDate)) + '</td><td>' + esc(isoToMdyFull(r.deliveryDate)) +
       '</td><td>' + esc(r.nameTown) + '</td><td style="text-align:center">' + esc(r.qty) + '</td><td style="text-align:right">' + money(r.unitPrice) +
-      '</td><td style="text-align:right">' + money(r.total) + '</td><td></td><td></td></tr>';
-  }).join('') || '<tr><td colspan="9" style="text-align:center;color:#888">No orders for this month.</td></tr>';
+      '</td><td style="text-align:right">' + money(r.total) + '</td></tr>';
+  }).join('') || '<tr><td colspan="7" style="text-align:center;color:#888">No orders for this month.</td></tr>';
   const paid = $('paidDate').value;
   const balance = paid ? 0 : total;
 
@@ -747,7 +747,7 @@ async function openOutput() {
         '<tr><td class="k">Paid Date :</td><td class="v">' + esc(isoToMdyFull(paid)) + '</td></tr></table></div>' +
     '</div>' +
     '<div style="margin-top:12px;color:#555;font-style:italic">Partial Payment</div>' +
-    '<table><thead><tr><th style="width:30px">No</th><th>Order Date</th><th>Delivery Date</th><th>Name &amp; Town</th><th>Qty</th><th>Unit price</th><th>Total price</th><th>Check #</th><th>Amount</th></tr></thead>' +
+    '<table><thead><tr><th style="width:30px">No</th><th>Order Date</th><th>Delivery Date</th><th>Name &amp; Town</th><th>Qty</th><th>Unit price</th><th>Total price</th></tr></thead>' +
     '<tbody>' + body + '</tbody></table>' +
     '<div class="sum"><div style="font-style:italic;color:#555">Thank you for business with us.</div>' +
     '<table><tr><td><b>Invoice Total</b></td><td style="text-align:right"><b>' + money(total) + '</b></td></tr>' +
