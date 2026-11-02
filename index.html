@@ -526,7 +526,7 @@ async function refresh() {
 }
 
 function sortedRows(data) {
-  return data.rows.slice().sort((a, b) => (a.deliveryDate + a.row).localeCompare(b.deliveryDate + b.row));
+  return data.rows.slice().sort((a, b) => (a.orderDate + a.deliveryDate + String(a.row).padStart(4, '0')).localeCompare(b.orderDate + b.deliveryDate + String(b.row).padStart(4, '0')));
 }
 
 function renderRows(data) {
@@ -721,7 +721,7 @@ async function openOutput() {
   const d = { inv: isoToMdyFull($('invDate').value), due: isoToMdyFull($('dueDate').value) };
   if (!a || !$('month').value || !d.inv) { showMsg('Select an account and invoice month first.', false); return; }
   if (!(await saveInvoiceInfo(null))) return;   // keep the sheet in step with the number and dates printed on the invoice
-  const rows = lastData.rows.slice().sort((x, y) => (x.orderDate + x.deliveryDate + String(x.row).padStart(4, '0')).localeCompare(y.orderDate + y.deliveryDate + String(y.row).padStart(4, '0')));
+  const rows = sortedRows(lastData);
   let total = 0;
   const body = rows.map((r, i) => {
     total += Number(r.total || 0);
