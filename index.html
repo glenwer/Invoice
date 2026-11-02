@@ -8,12 +8,12 @@
 <style>
   :root {
     --bg: #f6faea; --card: #ffffff; --text: #26301a; --muted: #6d7a58; --line: #dfeac2;
-    --brand: #a6d84a; --brand-dark: #8bc232; --btn: #c4e872; --btn-hover: #b3dc58; --yellow: #fff3b0; --yellow-hover: #ffe97d; --yellow-text: #4a3d00; --brand-text: #22330a; --tint: #eef7d3; --danger: #c0262d;
+    --fill: #e2f5b5; --brand: #a6d84a; --brand-dark: #8bc232; --btn: #c4e872; --btn-hover: #b3dc58; --yellow: #fff3b0; --yellow-hover: #ffe97d; --yellow-text: #4a3d00; --brand-text: #22330a; --tint: #eef7d3; --danger: #c0262d;
     --warn-bg: #fff4d6; --warn: #8a5a00; --ok-bg: #eaf6cc; --ok: #3d5a0a;
   }
   @media (prefers-color-scheme: dark) {
     :root { --bg: #151a0f; --card: #1f2616; --text: #eef3e0; --muted: #aab796; --line: #343f24;
-            --brand: #b5e05a; --brand-dark: #a0cc42; --btn: #c9ec7e; --btn-hover: #b9df63; --yellow: #5a4f1a; --yellow-hover: #6d5f1f; --yellow-text: #fff0a0; --brand-text: #1c2a07; --tint: #2a331b; --danger: #ff8a8f;
+            --fill: #3f5120; --brand: #b5e05a; --brand-dark: #a0cc42; --btn: #c9ec7e; --btn-hover: #b9df63; --yellow: #5a4f1a; --yellow-hover: #6d5f1f; --yellow-text: #fff0a0; --brand-text: #1c2a07; --tint: #2a331b; --danger: #ff8a8f;
             --warn-bg: #3a3017; --warn: #f4c95d; --ok-bg: #2a331b; --ok: #cfe99a; }
   }
   * { box-sizing: border-box; }
@@ -41,7 +41,7 @@
   .grid { display: grid; grid-template-columns: 380px 1fr; gap: 10px; align-items: start; }
   @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
   .invgrid { display: grid; grid-template-columns: 1fr 138px; gap: 10px; align-items: start; }
-  #invNo { font-weight: 800; text-align: center; }
+  #invNo, #invNo[readonly] { font-weight: 800; text-align: center; background: var(--fill); }
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; }
   .card h2 { margin: 0 0 6px; font-size: 14px; color: var(--text); font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
   label { display: block; font-size: 12px; color: var(--text); font-weight: 700; margin: 6px 0 2px; }
@@ -161,7 +161,7 @@
 
             <label for="invNo">Invoice #</label>
 
-            <input id="invNo" type="number" inputmode="numeric" min="1" step="1">
+            <input id="invNo" type="text" inputmode="numeric" autocomplete="off">
 
           </div>
 
@@ -326,6 +326,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbzEQuHS30yoDyBrwAqYvNgq
 const $ = (id) => document.getElementById(id);
 let accounts = [];
 let lastData = { rows: [], unassigned: [], used: 0, capacity: 100, paidDate: '' };
+let noData = false;
 let editingRow = null;
 let dirtyDelivery = false;
 
@@ -519,8 +520,17 @@ async function refresh() {
     const data = await api({ action: 'list', account: acct.key, month: $('month').value });
     lastData = data;
     applyDates(data);
-    $('invNo').value = data.invoiceNo || data.suggestedInvoiceNo || acct.nextInvoice;
-    $('acctMeta').textContent = data.invoiceNo ? '' : 'Invoice # not saved for this month yet (saved when you press Invoice Output or Save Dates).';
+    const mv2 = $('month').value;
+    noData = !!(mv2 && mv2 < monthStr() && data.rows.length === 0);   // a past month with no orders
+    if (noData) {
+      $('invNo').value = 'No data';
+      $('invNo').readOnly = true;
+      $('acctMeta').textContent = '';
+    } else {
+      $('invNo').readOnly = false;
+      $('invNo').value = data.invoiceNo || data.suggestedInvoiceNo || acct.nextInvoice;
+      $('acctMeta').textContent = data.invoiceNo ? '' : 'Invoice # not saved for this month yet (saved when you press Invoice Output or Save Dates).';
+    }
     renderRows(data);
   } catch (e) { showMsg(e.message, false); }
 }
@@ -626,15 +636,17 @@ $('saveBtn').onclick = async () => {
 
 // ---------- Paid Date / sheet month / Bill To ----------
 async function saveInvoiceInfo(okText) {
+  const invVal = noData ? '' : $('invNo').value.trim();
+  if (invVal !== '' && !/^\d+$/.test(invVal)) { showMsg('Invoice # must be a whole number.', false); return false; }
   const btn = $('paidBtn');
   btn.disabled = true;
   try {
     const acct = currentAccount();
     const res = await api({ action: 'saveInvoiceInfo', account: acct.key, month: $('month').value,
-                            invoiceNo: $('invNo').value, invoiceDate: $('invDate').value, dueDate: $('dueDate').value,
+                            invoiceNo: invVal, invoiceDate: $('invDate').value, dueDate: $('dueDate').value,
                             paidDate: $('paidDate').value });
     lastData.paidDate = $('paidDate').value;
-    lastData.invoiceNo = $('invNo').value;
+    lastData.invoiceNo = invVal;
     if (res.nextInvoice) acct.nextInvoice = res.nextInvoice;
     if (okText) showMsg(okText, true);
     $('acctMeta').textContent = '';
@@ -720,6 +732,7 @@ async function openOutput() {
   const a = currentAccount();
   const d = { inv: isoToMdyFull($('invDate').value), due: isoToMdyFull($('dueDate').value) };
   if (!a || !$('month').value || !d.inv) { showMsg('Select an account and invoice month first.', false); return; }
+  if (noData) { showMsg('No data for this month - there is nothing to invoice.', false); return; }
   if (!(await saveInvoiceInfo(null))) return;   // keep the sheet in step with the number and dates printed on the invoice
   const rows = sortedRows(lastData);
   let total = 0;
